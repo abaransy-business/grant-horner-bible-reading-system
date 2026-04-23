@@ -79,7 +79,7 @@ const initializeApp = async () => {
     wrapper.innerHTML = [
       `<div class="alert alert-${type} alert-dismissible fade show shadow-sm" role="alert">`,
       `   <div>${message}</div>`,
-      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`,
+      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
       "</div>",
     ].join("");
     alertContainer.append(wrapper);
