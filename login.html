@@ -22,9 +22,9 @@
           <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" />
         </div>
         <button type="submit" class="btn btn-primary">login</button>
-        <a href="/signup" class="btn btn-secondary ms-2">create account</a>
+        <a href="/signup" class="btn btn-link ps-3">create account</a>
       </form>
-      <div id="error_message" class="mt-3 text-danger" style="display:none;">Bad login.</div>
+      <div id="error_message" class="mt-3 text-danger" style="display:none;">Invalid username or password.</div>
     </div>
     <script>
       if (new URLSearchParams(location.search).get("error")) {

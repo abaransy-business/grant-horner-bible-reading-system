@@ -70,7 +70,10 @@ app.post('/signup', async (req, res, next) => {
   if (password !== password_confirm) return res.redirect('/signup?error=mismatch');
   try {
     const hash = await bcrypt.hash(password, 12);
-    await pool.query('INSERT INTO users (username, password_hash) VALUES ($1, $2)', [username, hash]);
+    await pool.query(
+      'INSERT INTO users (username, password_hash, chapter_code) VALUES ($1, $2, $3)',
+      [username, hash, '0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0'],
+    );
     res.redirect('/login');
   } catch (err) {
     if (err.code === '23505') return res.redirect('/signup?error=taken');
@@ -87,6 +90,25 @@ app.get('/logout', (req, res, next) => {
 
 app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT chapter_code FROM users WHERE id = $1', [req.user.id]);
+    const chapterCode = rows[0]?.chapter_code ?? '0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0';
+    res.json({ chapterCode });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/chapter-code', requireAuth, express.json(), async (req, res, next) => {
+  try {
+    await pool.query('UPDATE users SET chapter_code = $1 WHERE id = $2', [req.body.chapterCode, req.user.id]);
+    res.sendStatus(200);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Static assets served without auth (JS, CSS, markdown, favicon)
