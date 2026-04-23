@@ -1,0 +1,21 @@
+{
+  "name": "grant-horner-bible-reading-express",
+  "version": "1.0.0",
+  "description": "A simple app to read the ESV bible according to Grant Horner's Bible Reading System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.20.0"
+  }
+}
