@@ -19,7 +19,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 },
+  cookie: { maxAge: 10 * 365 * 24 * 60 * 60 * 1000 },
 }));
 
 passport.use(new LocalStrategy(async (username, password, done) => {
