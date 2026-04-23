@@ -1,51 +1,59 @@
 import { fullLists } from "./fullLists.js";
 
-const chapterCodeHistory = [];
+const DEFAULT_CODE = "0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0";
 let currentChapterCode = null;
 
 const findCurrentChapter = (chapterCode) => {
-  const chapterCodeSplit = chapterCode.split("-");
-  const currentListIndex = chapterCodeSplit.splice(0, 1)[0];
-  const currentListBookmark = chapterCodeSplit[currentListIndex];
+  const parts = chapterCode.split("-");
+  const currentListIndex = parts.splice(0, 1)[0];
+  const currentListBookmark = parts[currentListIndex];
   const [bookIndex, chapterIndex] = currentListBookmark.split("_");
   return fullLists[currentListIndex][bookIndex][chapterIndex];
 };
 
 const findNextChapter = (chapterCode) => {
-  chapterCodeHistory.push(chapterCode);
-  const chapterCodeSplit = chapterCode.split("-");
-  const currentListIndex = Number(chapterCodeSplit.splice(0, 1)[0]);
+  const parts = chapterCode.split("-");
+  const currentListIndex = Number(parts.splice(0, 1)[0]);
   const nextListIndex = (currentListIndex + 1) % 10;
-  const nextChapter = findCurrentChapter(
-    `${nextListIndex}-${chapterCodeSplit.join("-")}`,
-  );
+  const nextChapter = findCurrentChapter(`${nextListIndex}-${parts.join("-")}`);
 
-  const currentListBookmark = chapterCodeSplit[currentListIndex];
   const [bookIndexAsString, chapterIndexAsString] =
-    currentListBookmark.split("_");
+    parts[currentListIndex].split("_");
   const bookIndex = Number(bookIndexAsString);
   const chapterIndex = Number(chapterIndexAsString);
 
   if (fullLists[currentListIndex][bookIndex][chapterIndex + 1]) {
-    chapterCodeSplit[currentListIndex] = `${bookIndexAsString}_${chapterIndex + 1}`;
-    return { nextChapter, newChapterCode: `${nextListIndex}-${chapterCodeSplit.join("-")}` };
+    parts[currentListIndex] = `${bookIndexAsString}_${chapterIndex + 1}`;
+  } else if (fullLists[currentListIndex][bookIndex + 1]?.[0]) {
+    parts[currentListIndex] = `${bookIndex + 1}_0`;
+  } else {
+    parts[currentListIndex] = "0_0";
   }
 
-  if (fullLists[currentListIndex][bookIndex + 1]?.[0]) {
-    chapterCodeSplit[currentListIndex] = `${bookIndex + 1}_0`;
-    return { nextChapter, newChapterCode: `${nextListIndex}-${chapterCodeSplit.join("-")}` };
-  }
-
-  chapterCodeSplit[currentListIndex] = "0_0";
-  return { nextChapter, newChapterCode: `${nextListIndex}-${chapterCodeSplit.join("-")}` };
+  return { nextChapter, newChapterCode: `${nextListIndex}-${parts.join("-")}` };
 };
 
-const findPreviousChapter = () => {
-  const lastSeenChapterCode = chapterCodeHistory.pop();
-  return {
-    previousChapter: findCurrentChapter(lastSeenChapterCode),
-    newChapterCode: lastSeenChapterCode,
-  };
+const findPreviousChapter = (chapterCode) => {
+  const parts = chapterCode.split("-");
+  const currentListIndex = Number(parts.splice(0, 1)[0]);
+  const prevListIndex = (currentListIndex - 1 + 10) % 10;
+
+  const [bookIndexAsString, chapterIndexAsString] =
+    parts[prevListIndex].split("_");
+  const bookIndex = Number(bookIndexAsString);
+  const chapterIndex = Number(chapterIndexAsString);
+
+  if (chapterIndex > 0) {
+    parts[prevListIndex] = `${bookIndexAsString}_${chapterIndex - 1}`;
+  } else if (bookIndex > 0) {
+    const lastChapterIndex = fullLists[prevListIndex][bookIndex - 1].length - 1;
+    parts[prevListIndex] = `${bookIndex - 1}_${lastChapterIndex}`;
+  } else {
+    parts[prevListIndex] = "0_0";
+  }
+
+  const newChapterCode = `${prevListIndex}-${parts.join("-")}`;
+  return { previousChapter: findCurrentChapter(newChapterCode), newChapterCode };
 };
 
 const saveChapterCode = (chapterCode) => {
@@ -71,7 +79,7 @@ const initializeApp = async () => {
     wrapper.innerHTML = [
       `<div class="alert alert-${type} alert-dismissible fade show shadow-sm" role="alert">`,
       `   <div>${message}</div>`,
-      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`,
       "</div>",
     ].join("");
     alertContainer.append(wrapper);
@@ -99,11 +107,11 @@ const initializeApp = async () => {
   });
 
   previousChapterButton.addEventListener("click", () => {
-    const { previousChapter, newChapterCode } = findPreviousChapter();
+    const { previousChapter, newChapterCode } = findPreviousChapter(currentChapterCode);
     document.getElementById("chapter_content").mdContent = previousChapter;
     currentChapterCode = newChapterCode;
     saveChapterCode(newChapterCode);
-    if (chapterCodeHistory.length === 0) previousChapterButton.disabled = true;
+    previousChapterButton.disabled = newChapterCode === DEFAULT_CODE;
   });
 
   myProgressButton.addEventListener("click", () => {
@@ -140,6 +148,7 @@ const initializeApp = async () => {
 
   const { chapterCode } = await fetch('/api/chapter-code').then((r) => r.json());
   currentChapterCode = chapterCode;
+  previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
   setCurrentChapter(currentChapterCode);
 };
 

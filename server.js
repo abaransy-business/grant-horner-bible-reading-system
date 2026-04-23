@@ -1,12 +1,15 @@
-const express = require('express');
-const session = require('express-session');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const bcrypt = require('bcrypt');
-const path = require('path');
-const PgSession = require('connect-pg-simple')(session);
-const { pool } = require('./db');
+import express from 'express';
+import session from 'express-session';
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
+import bcrypt from 'bcryptjs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import connectPgSimple from 'connect-pg-simple';
+import { pool } from './db.js';
 
+const PgSession = connectPgSimple(session);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(express.urlencoded({ extended: false }));
@@ -52,7 +55,7 @@ const requireAuth = (req, res, next) => {
 
 app.get('/login', (req, res) => {
   if (req.isAuthenticated()) return res.redirect('/');
-  res.sendFile(path.join(__dirname, 'login.html'));
+  res.sendFile(join(__dirname, 'login.html'));
 });
 
 app.post('/login', passport.authenticate('local', {
@@ -62,7 +65,7 @@ app.post('/login', passport.authenticate('local', {
 
 app.get('/signup', (req, res) => {
   if (req.isAuthenticated()) return res.redirect('/');
-  res.sendFile(path.join(__dirname, 'signup.html'));
+  res.sendFile(join(__dirname, 'signup.html'));
 });
 
 app.post('/signup', async (req, res, next) => {
@@ -92,7 +95,7 @@ app.get('/logout', (req, res, next) => {
 });
 
 app.get('/', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(join(__dirname, 'index.html'));
 });
 
 app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
@@ -114,7 +117,6 @@ app.post('/api/chapter-code', requireAuth, express.json(), async (req, res, next
   }
 });
 
-// Static assets served without auth (JS, CSS, markdown, favicon)
 app.use(express.static(__dirname, { index: false }));
 
 const PORT = process.env.PORT || 3000;
