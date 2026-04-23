@@ -85,7 +85,7 @@ const initializeApp = async () => {
   goToResourceButton.addEventListener("click", () => {
     const selectedValue = document.getElementById("resources_dropdown").value;
     window.open(
-      "https://github.com/abaransy-business/grant-horner-bible-reading/tree/main/resources/" + selectedValue,
+      "https://github.com/abaransy-business/grant-horner-bible-reading-system/tree/main/resources/" + selectedValue,
       "_blank",
     );
   });

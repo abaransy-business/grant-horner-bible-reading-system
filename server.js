@@ -70,11 +70,14 @@ app.post('/signup', async (req, res, next) => {
   if (password !== password_confirm) return res.redirect('/signup?error=mismatch');
   try {
     const hash = await bcrypt.hash(password, 12);
-    await pool.query(
-      'INSERT INTO users (username, password_hash, chapter_code) VALUES ($1, $2, $3)',
+    const { rows } = await pool.query(
+      'INSERT INTO users (username, password_hash, chapter_code) VALUES ($1, $2, $3) RETURNING *',
       [username, hash, '0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0'],
     );
-    res.redirect('/login');
+    await new Promise((resolve, reject) =>
+      req.login(rows[0], (err) => (err ? reject(err) : resolve())),
+    );
+    res.redirect('/');
   } catch (err) {
     if (err.code === '23505') return res.redirect('/signup?error=taken');
     next(err);
