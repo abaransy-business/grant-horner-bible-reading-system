@@ -50,21 +50,26 @@ app.use(passport.session());
 
 const requireAuth = (req, res, next) => {
   if (req.isAuthenticated()) return next();
-  res.redirect('/login');
+  res.redirect('/');
 };
 
+app.get('/', (req, res) => {
+  if (req.isAuthenticated()) return res.redirect('/app');
+  res.sendFile(join(__dirname, 'home.html'));
+});
+
 app.get('/login', (req, res) => {
-  if (req.isAuthenticated()) return res.redirect('/');
+  if (req.isAuthenticated()) return res.redirect('/app');
   res.sendFile(join(__dirname, 'login.html'));
 });
 
 app.post('/login', passport.authenticate('local', {
-  successRedirect: '/',
+  successRedirect: '/app',
   failureRedirect: '/login?error=invalid',
 }));
 
 app.get('/signup', (req, res) => {
-  if (req.isAuthenticated()) return res.redirect('/');
+  if (req.isAuthenticated()) return res.redirect('/app');
   res.sendFile(join(__dirname, 'signup.html'));
 });
 
@@ -80,7 +85,7 @@ app.post('/signup', async (req, res, next) => {
     await new Promise((resolve, reject) =>
       req.login(rows[0], (err) => (err ? reject(err) : resolve())),
     );
-    res.redirect('/');
+    res.redirect('/app');
   } catch (err) {
     if (err.code === '23505') return res.redirect('/signup?error=taken');
     next(err);
@@ -94,7 +99,7 @@ app.get('/logout', (req, res, next) => {
   });
 });
 
-app.get('/', requireAuth, (req, res) => {
+app.get('/app', requireAuth, (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
 });
 
