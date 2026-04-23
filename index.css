@@ -1,0 +1,61 @@
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.bible-content-container {
+  min-height: 400px;
+}
+
+#chapter_content {
+  line-height: 1.8;
+  display: block;
+  font-family: "Georgia", "Times New Roman", Times, serif;
+}
+
+/* Ensure md-block content is styled reasonably */
+#chapter_content h1 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 800;
+  color: #0d6efd;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+#chapter_content h2 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--bs-border-color);
+  padding-bottom: 0.5rem;
+}
+
+#chapter_content p {
+  margin-bottom: 1.25rem;
+  font-size: inherit; /* Allow font-size slider to control this */
+}
+
+/* Style for verse numbers if they are in a specific format (e.g., "1. ") */
+/* Since it's markdown, they might be list items or just text */
+#chapter_content ol {
+  padding-left: 2.5em;
+}
+
+#chapter_content li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+/* Customize the range slider a bit */
+.form-range::-webkit-slider-runnable-track {
+  background-color: var(--bs-secondary-bg);
+}
+
+.form-range::-webkit-slider-thumb {
+  background-color: #0d6efd;
+}
+
+#alert_container {
+  z-index: 1055;
+}
