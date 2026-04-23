@@ -125,7 +125,12 @@ const initializeApp = async () => {
 
   instructionsButton.addEventListener("click", () => {
     showAlert(
-      `<strong>How to use:</strong><br>
+      `<strong>Grant Horner's Bible-Reading System</strong><br><br>
+      Read 10 chapters per day — one from each of 10 lists organized by biblical genre:
+      Gospels, Law, NT Letters (1 &amp; 2), Wisdom, Psalms, Proverbs, OT History, Prophets, and Acts.
+      Because each list has a different number of chapters, they cycle independently —
+      the combination of readings changes every day and never repeats.<br><br>
+      <strong>How to use:</strong><br>
       1. Use "Next" to advance through your 10 reading lists.<br>
       2. Your progress is saved automatically.`,
       "info",
