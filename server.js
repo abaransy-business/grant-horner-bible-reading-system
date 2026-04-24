@@ -24,7 +24,7 @@ app.use(session({
 
 passport.use(new LocalStrategy(async (username, password, done) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username.toLowerCase()]);
     const user = rows[0];
     if (!user) return done(null, false);
     const match = await bcrypt.compare(password, user.password_hash);
@@ -74,7 +74,8 @@ app.get('/signup', (req, res) => {
 });
 
 app.post('/signup', async (req, res, next) => {
-  const { username, password, password_confirm } = req.body;
+  const { username: rawUsername, password, password_confirm } = req.body;
+  const username = rawUsername.toLowerCase();
   if (password !== password_confirm) return res.redirect('/signup?error=mismatch');
   try {
     const hash = await bcrypt.hash(password, 12);
