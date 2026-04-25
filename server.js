@@ -1,3 +1,8 @@
+import { existsSync } from 'fs';
+if (existsSync(new URL('.env', import.meta.url).pathname)) {
+  const { config } = await import('dotenv');
+  config();
+}
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';

@@ -261,9 +261,10 @@ const initializeApp = async () => {
     const h = popup.offsetHeight;
     const x = rect.left + rect.width / 2;
     const y = rect.top;
+    const touchDevice = window.matchMedia('(pointer: coarse)').matches;
     let left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
-    let top = y - h - 10;
-    if (top < 8) top = y + rect.height + 6;
+    let top = touchDevice ? y + rect.height + 10 : y - h - 10;
+    if (!touchDevice && top < 8) top = y + rect.height + 6;
     popup.style.left = `${left}px`;
     popup.style.top = `${top}px`;
   };
@@ -294,19 +295,28 @@ const initializeApp = async () => {
     anchorRectFn = null;
   };
 
-  // Show color popup on text selection
+  // Show color popup on text selection (mouseup for desktop, selectionchange for iOS)
+  const tryShowSelectionPopup = () => {
+    if (pendingText) return; // color popup already open — don't interfere
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+    if (!chapterContent.contains(range.commonAncestorContainer)) return;
+    const text = selection.toString().trim();
+    if (!text) return;
+    pendingRange = range.cloneRange();
+    showColorPopup(text);
+  };
+
   document.addEventListener('mouseup', (e) => {
     if (popup.contains(e.target)) return;
-    setTimeout(() => {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) return;
-      const range = selection.getRangeAt(0);
-      if (!chapterContent.contains(range.commonAncestorContainer)) return;
-      const text = selection.toString().trim();
-      if (!text) return;
-      pendingRange = range.cloneRange();
-      showColorPopup(text);
-    }, 0);
+    setTimeout(tryShowSelectionPopup, 0);
+  });
+
+  let selectionChangeTimer = null;
+  document.addEventListener('selectionchange', () => {
+    clearTimeout(selectionChangeTimer);
+    selectionChangeTimer = setTimeout(tryShowSelectionPopup, 300);
   });
 
   // Show remove popup on mark click
@@ -424,7 +434,7 @@ const initializeApp = async () => {
     });
 
     if (filtered.length === 0) {
-      highlightsList.innerHTML = '<p class="text-muted">No highlights found.</p>';
+      highlightsList.innerHTML = `<p class="text-muted">${allHighlights.length === 0 ? 'You have no highlights yet.' : 'No highlights match your search.'}</p>`;
       return;
     }
 
@@ -476,16 +486,21 @@ const initializeApp = async () => {
   };
 
   highlightsButton.addEventListener('click', async () => {
-    const raw = await fetch('/api/highlights/all').then((r) => r.json());
-    allHighlights = raw.flatMap((h) => {
-      const info = getChapterInfo(h.chapter_code);
-      if (!info) return [];
-      return [{ ...h, _bookName: info.bookName, _chapterNum: info.chapterNum }];
-    });
-    allHighlights.sort((a, b) => a._bookName.localeCompare(b._bookName) || a._chapterNum - b._chapterNum);
+    highlightsList.innerHTML = '<p class="text-muted">Loading...</p>';
     highlightsSearch.value = '';
-    renderHighlights();
     highlightsModal.show();
+    try {
+      const raw = await fetch('/api/highlights/all').then((r) => r.json());
+      allHighlights = raw.flatMap((h) => {
+        const info = getChapterInfo(h.chapter_code);
+        if (!info) return [];
+        return [{ ...h, _bookName: info.bookName, _chapterNum: info.chapterNum }];
+      });
+      allHighlights.sort((a, b) => a._bookName.localeCompare(b._bookName) || a._chapterNum - b._chapterNum);
+      renderHighlights();
+    } catch (e) {
+      highlightsList.innerHTML = '<p class="text-muted">Failed to load highlights.</p>';
+    }
   });
 
   highlightsSearch.addEventListener('input', () => renderHighlights(highlightsSearch.value));
