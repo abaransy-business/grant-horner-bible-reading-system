@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
@@ -106,12 +107,20 @@ app.get('/app', requireAuth, (req, res) => {
 
 app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT chapter_code FROM users WHERE id = $1', [req.user.id]);
+    const { rows } = await pool.query('SELECT chapter_code, theme FROM users WHERE id = $1', [req.user.id]);
     const chapterCode = rows[0]?.chapter_code ?? '0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0';
-    res.json({ chapterCode });
+    const theme = rows[0]?.theme ?? 'dark';
+    res.json({ chapterCode, theme });
   } catch (err) {
     next(err);
   }
+});
+
+app.post('/api/theme', requireAuth, express.json(), async (req, res, next) => {
+  try {
+    await pool.query('UPDATE users SET theme = $1 WHERE id = $2', [req.body.theme, req.user.id]);
+    res.sendStatus(200);
+  } catch (err) { next(err); }
 });
 
 app.post('/api/chapter-code', requireAuth, express.json(), async (req, res, next) => {
@@ -121,6 +130,34 @@ app.post('/api/chapter-code', requireAuth, express.json(), async (req, res, next
   } catch (err) {
     next(err);
   }
+});
+
+app.get('/api/highlights', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, selected_text, color FROM highlights WHERE user_id = $1 AND chapter_code = $2',
+      [req.user.id, req.query.chapterCode],
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+app.post('/api/highlights', requireAuth, express.json(), async (req, res, next) => {
+  try {
+    const { chapterCode, selectedText, color } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO highlights (user_id, chapter_code, selected_text, color) VALUES ($1, $2, $3, $4) RETURNING id',
+      [req.user.id, chapterCode, selectedText, color],
+    );
+    res.json({ id: rows[0].id });
+  } catch (err) { next(err); }
+});
+
+app.delete('/api/highlights/:id', requireAuth, async (req, res, next) => {
+  try {
+    await pool.query('DELETE FROM highlights WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    res.sendStatus(200);
+  } catch (err) { next(err); }
 });
 
 app.use(express.static(__dirname, { index: false }));
