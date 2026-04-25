@@ -194,8 +194,10 @@ const loadHighlights = async (chapterCode) => {
 const initializeApp = async () => {
   const nextChapterButton = document.getElementById("next_chapter_button");
   const previousChapterButton = document.getElementById("previous_chapter_button");
+  const resumeReadingButton = document.getElementById("resume_reading_button");
   const instructionsButton = document.getElementById("instructions_button");
   const myProgressButton = document.getElementById("my_progress_button");
+  const highlightsButton = document.getElementById("highlights_button");
   const themeToggleButton = document.getElementById("theme_toggle_button");
   const goToResourceButton = document.getElementById("go_to_resource_button");
   const fontSizeSlider = document.getElementById("font_size_control");
@@ -342,6 +344,23 @@ const initializeApp = async () => {
     loadHighlights(chapterCode);
   };
 
+  const enterPreview = (previewCode) => {
+    setCurrentChapter(previewCode);
+    nextChapterButton.style.display = 'none';
+    previousChapterButton.style.display = 'none';
+    resumeReadingButton.style.display = '';
+  };
+
+  const exitPreview = () => {
+    setCurrentChapter(currentChapterCode);
+    nextChapterButton.style.display = '';
+    previousChapterButton.style.display = '';
+    resumeReadingButton.style.display = 'none';
+    previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
+  };
+
+  resumeReadingButton.addEventListener('click', exitPreview);
+
   goToResourceButton.addEventListener("click", () => {
     const selectedValue = document.getElementById("resources_dropdown").value;
     window.open(
@@ -374,6 +393,102 @@ const initializeApp = async () => {
     });
     showAlert(lines.join("<br>"), "info");
   });
+
+  const getChapterInfo = (chapterKey) => {
+    const [listIdx, bookmark] = chapterKey.split('-');
+    const [bookIdx, chapterIdx] = bookmark.split('_');
+    const chapter = fullLists[Number(listIdx)]?.[Number(bookIdx)]?.[Number(chapterIdx)];
+    if (!chapter) return null;
+    const match = chapter.match(/^#\s+(.+?)\s+-\s+Chapter\s+(\d+)/m);
+    return match ? { bookName: match[1], chapterNum: Number(match[2]) } : null;
+  };
+
+  const getSwatchColor = (rgbaColor) => {
+    const match = HIGHLIGHT_COLORS.find((c) => c.value === rgbaColor);
+    return match ? match.swatch : rgbaColor;
+  };
+
+  const highlightsModal = new bootstrap.Modal(document.getElementById('highlights_modal'));
+  const highlightsList = document.getElementById('highlights_list');
+  const highlightsSearch = document.getElementById('highlights_search');
+  let allHighlights = [];
+
+  const renderHighlights = (query = '') => {
+    const q = query.toLowerCase();
+    highlightsList.innerHTML = '';
+
+    const filtered = allHighlights.filter((h) => {
+      if (!q) return true;
+      return h.selected_text.toLowerCase().includes(q) ||
+        h._bookName.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+      highlightsList.innerHTML = '<p class="text-muted">No highlights found.</p>';
+      return;
+    }
+
+    const groups = {};
+    for (const h of filtered) {
+      const key = h._bookName;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(h);
+    }
+
+    for (const [bookName, items] of Object.entries(groups)) {
+      const header = document.createElement('h6');
+      header.className = 'fw-bold mt-3 mb-2';
+      header.textContent = bookName;
+      highlightsList.appendChild(header);
+
+      for (const h of items) {
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-center gap-2 py-2 px-2 rounded mb-1 highlight-list-item';
+
+        const dot = document.createElement('span');
+        dot.className = 'flex-shrink-0';
+        dot.style.cssText = `width:12px;height:12px;border-radius:50%;background:${getSwatchColor(h.color)};display:inline-block`;
+
+        const text = document.createElement('span');
+        text.className = 'flex-grow-1 text-truncate';
+        text.textContent = h.selected_text;
+
+        const chapterLabel = document.createElement('small');
+        chapterLabel.className = 'text-muted flex-shrink-0';
+        chapterLabel.textContent = `Ch. ${h._chapterNum}`;
+
+        row.appendChild(dot);
+        row.appendChild(text);
+        row.appendChild(chapterLabel);
+
+        row.addEventListener('click', () => {
+          const parts = currentChapterCode.split('-');
+          const [listIdx, bookmark] = h.chapter_code.split('-');
+          parts[0] = listIdx;
+          parts[Number(listIdx) + 1] = bookmark;
+          enterPreview(parts.join('-'));
+          highlightsModal.hide();
+        });
+
+        highlightsList.appendChild(row);
+      }
+    }
+  };
+
+  highlightsButton.addEventListener('click', async () => {
+    const raw = await fetch('/api/highlights/all').then((r) => r.json());
+    allHighlights = raw.flatMap((h) => {
+      const info = getChapterInfo(h.chapter_code);
+      if (!info) return [];
+      return [{ ...h, _bookName: info.bookName, _chapterNum: info.chapterNum }];
+    });
+    allHighlights.sort((a, b) => a._bookName.localeCompare(b._bookName) || a._chapterNum - b._chapterNum);
+    highlightsSearch.value = '';
+    renderHighlights();
+    highlightsModal.show();
+  });
+
+  highlightsSearch.addEventListener('input', () => renderHighlights(highlightsSearch.value));
 
   instructionsButton.addEventListener("click", () => {
     showAlert(

@@ -109,3 +109,12 @@ mark[data-highlight-id] {
   cursor: pointer;
   color: inherit;
 }
+
+.highlight-list-item {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.highlight-list-item:hover {
+  background: var(--bs-secondary-bg);
+}

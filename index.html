@@ -34,6 +34,9 @@
           <button id="my_progress_button" class="btn btn-outline-info btn-sm">
             My Progress
           </button>
+          <button id="highlights_button" class="btn btn-outline-info btn-sm">
+            Highlights
+          </button>
         </div>
       </header>
 
@@ -187,9 +190,32 @@
           >
             Next
           </button>
+          <button
+            id="resume_reading_button"
+            class="btn btn-primary btn-lg px-4"
+            type="button"
+            style="display:none"
+          >
+            Resume Reading
+          </button>
         </nav>
       </main>
     </div>
+    <div class="modal fade" id="highlights_modal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Highlights</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" id="highlights_search" class="form-control mb-3" placeholder="Search highlights...">
+            <div id="highlights_list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="highlight_popup"></div>
     <div id="alert_container" class="position-fixed top-0 end-0 p-3"></div>
   </body>

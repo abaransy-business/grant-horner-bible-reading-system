@@ -132,6 +132,16 @@ app.post('/api/chapter-code', requireAuth, express.json(), async (req, res, next
   }
 });
 
+app.get('/api/highlights/all', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, chapter_code, selected_text, color FROM highlights WHERE user_id = $1 ORDER BY chapter_code, created_at',
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
 app.get('/api/highlights', requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
