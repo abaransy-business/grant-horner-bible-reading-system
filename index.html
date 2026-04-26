@@ -171,10 +171,15 @@
         <div
           id="preview_banner"
           class="alert alert-warning d-flex align-items-center justify-content-between py-2 px-3 mb-3"
-          style="display:none !important"
+          style="display: none !important"
         >
-          <span>You're previewing a highlight — this is not your current reading position.</span>
-          <button id="resume_reading_banner_button" class="btn btn-warning btn-sm ms-3 flex-shrink-0">Resume Reading</button>
+          <span>You're previewing a highlight.</span>
+          <button
+            id="resume_reading_banner_button"
+            class="btn btn-warning btn-sm ms-3 flex-shrink-0"
+          >
+            Resume Reading
+          </button>
         </div>
 
         <div
@@ -207,10 +212,19 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Highlights</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
           </div>
           <div class="modal-body">
-            <input type="text" id="highlights_search" class="form-control mb-3" placeholder="Search highlights...">
+            <input
+              type="text"
+              id="highlights_search"
+              class="form-control mb-3"
+              placeholder="Search highlights..."
+            />
             <div id="highlights_list"></div>
           </div>
         </div>
