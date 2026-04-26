@@ -410,12 +410,23 @@ const initializeApp = async () => {
   });
 
   myProgressButton.addEventListener("click", () => {
+    const alertContainer = document.getElementById("alert_container");
+    const existing = alertContainer.querySelector('[data-progress-alert]');
+    if (existing) { existing.remove(); return; }
     const bookmarks = currentChapterCode.split("-").slice(1);
     const lines = bookmarks.map((bookmark, i) => {
       const [bookIndex, chapterIndex] = bookmark.split("_");
       return `List ${i + 1}: Book ${Number(bookIndex) + 1}, Chapter ${Number(chapterIndex) + 1}`;
     });
-    showAlert(lines.join("<br>"), "info");
+    const wrapper = document.createElement("div");
+    wrapper.dataset.progressAlert = "1";
+    wrapper.innerHTML = [
+      `<div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">`,
+      `   <div>${lines.join("<br>")}</div>`,
+      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+      "</div>",
+    ].join("");
+    alertContainer.append(wrapper);
   });
 
   const getChapterInfo = (chapterKey) => {
@@ -520,17 +531,24 @@ const initializeApp = async () => {
   highlightsSearch.addEventListener('input', () => renderHighlights(highlightsSearch.value));
 
   instructionsButton.addEventListener("click", () => {
-    showAlert(
-      `<strong>Grant Horner's Bible-Reading System</strong><br><br>
+    const alertContainer = document.getElementById("alert_container");
+    if (alertContainer.querySelector('[data-instructions-alert]')) return;
+    const wrapper = document.createElement("div");
+    wrapper.dataset.instructionsAlert = "1";
+    wrapper.innerHTML = [
+      `<div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">`,
+      `   <div><strong>Grant Horner's Bible-Reading System</strong><br><br>
       Read 10 chapters per day — one from each of 10 lists organized by biblical genre:
       Gospels, Law, NT Letters (1 &amp; 2), Wisdom, Psalms, Proverbs, OT History, Prophets, and Acts.
       Because each list has a different number of chapters, they cycle independently —
       the combination of readings changes every day and never repeats.<br><br>
       <strong>How to use:</strong><br>
       1. Use "Next" to advance through your 10 reading lists.<br>
-      2. Your progress is saved automatically.`,
-      "info",
-    );
+      2. Your progress is saved automatically.</div>`,
+      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+      "</div>",
+    ].join("");
+    alertContainer.append(wrapper);
   });
 
   themeToggleButton.addEventListener("click", () => {
