@@ -2,3 +2,4 @@
 .env
 highlights.txt
 import-highlights.mjs
+debug-highlights.mjs

@@ -217,7 +217,7 @@ const initializeApp = async () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chapterCode: getChapterKey(currentChapterCode),
+          chapterCode: getChapterKey(displayedChapterCode),
           selectedText: pendingText,
           color: value,
         }),
@@ -357,7 +357,10 @@ const initializeApp = async () => {
     alertContainer.append(wrapper);
   };
 
+  let displayedChapterCode = null;
+
   const setCurrentChapter = (chapterCode) => {
+    displayedChapterCode = chapterCode;
     chapterContent.mdContent = findCurrentChapter(chapterCode);
     return loadHighlights(chapterCode);
   };
