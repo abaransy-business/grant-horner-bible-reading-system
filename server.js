@@ -4,6 +4,7 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import bcrypt from 'bcryptjs';
+import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import connectPgSimple from 'connect-pg-simple';
@@ -12,6 +13,8 @@ import { pool } from './db.js';
 const PgSession = connectPgSimple(session);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+const indexHtml = readFileSync(join(__dirname, 'index.html'), 'utf8');
 
 app.use(express.urlencoded({ extended: false }));
 
@@ -102,7 +105,8 @@ app.get('/logout', (req, res, next) => {
 });
 
 app.get('/app', requireAuth, (req, res) => {
-  res.sendFile(join(__dirname, 'index.html'));
+  const theme = req.user.theme ?? 'dark';
+  res.type('html').send(indexHtml.replace('data-bs-theme="dark"', `data-bs-theme="${theme}"`));
 });
 
 app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
