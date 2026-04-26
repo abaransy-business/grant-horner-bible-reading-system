@@ -421,15 +421,13 @@ const initializeApp = async () => {
       const [bookIndex, chapterIndex] = bookmark.split("_");
       return `List ${i + 1}: Book ${Number(bookIndex) + 1}, Chapter ${Number(chapterIndex) + 1}`;
     });
-    const wrapper = document.createElement("div");
-    wrapper.dataset.progressAlert = "1";
-    wrapper.innerHTML = [
-      `<div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">`,
-      `   <div>${lines.join("<br>")}</div>`,
-      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-      "</div>",
-    ].join("");
-    alertContainer.append(wrapper);
+    const el = document.createElement("div");
+    el.className = "alert alert-info alert-dismissible fade show shadow-sm";
+    el.setAttribute("role", "alert");
+    el.dataset.progressAlert = "1";
+    el.innerHTML = `<div>${lines.join("<br>")}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+    alertContainer.append(el);
   });
 
   const getChapterInfo = (chapterKey) => {
@@ -536,22 +534,19 @@ const initializeApp = async () => {
   instructionsButton.addEventListener("click", () => {
     const alertContainer = document.getElementById("alert_container");
     if (alertContainer.querySelector('[data-instructions-alert]')) return;
-    const wrapper = document.createElement("div");
-    wrapper.dataset.instructionsAlert = "1";
-    wrapper.innerHTML = [
-      `<div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">`,
-      `   <div><strong>Grant Horner's Bible-Reading System</strong><br><br>
+    const el = document.createElement("div");
+    el.className = "alert alert-info alert-dismissible fade show shadow-sm";
+    el.setAttribute("role", "alert");
+    el.dataset.instructionsAlert = "1";
+    el.innerHTML = `<div><strong>Grant Horner's Bible-Reading System</strong><br><br>
       Read 10 chapters per day — one from each of 10 lists organized by biblical genre:
       Gospels, Law, NT Letters (1 &amp; 2), Wisdom, Psalms, Proverbs, OT History, Prophets, and Acts.
       Because each list has a different number of chapters, they cycle independently —
-      the combination of readings changes every day and never repeats.<br><br>
-      <strong>How to use:</strong><br>
-      1. Use "Next" to advance through your 10 reading lists.<br>
-      2. Your progress is saved automatically.</div>`,
-      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-      "</div>",
-    ].join("");
-    alertContainer.append(wrapper);
+      the combination of readings changes every day and never repeats.
+      Use "Next" to advance through your reading lists — your progress is saved automatically.
+      Select any text to highlight it in one of several colors, and use "Highlights" to browse and revisit everything you've marked.</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+    alertContainer.append(el);
   });
 
   themeToggleButton.addEventListener("click", () => {
