@@ -169,6 +169,15 @@
         </div>
 
         <div
+          id="preview_banner"
+          class="alert alert-warning d-flex align-items-center justify-content-between py-2 px-3 mb-3"
+          style="display:none !important"
+        >
+          <span>You're previewing a highlight — this is not your current reading position.</span>
+          <button id="resume_reading_banner_button" class="btn btn-warning btn-sm ms-3 flex-shrink-0">Resume Reading</button>
+        </div>
+
+        <div
           class="bible-content-container p-3 mb-4 bg-body border rounded shadow-sm"
         >
           <md-block id="chapter_content"></md-block>
@@ -189,14 +198,6 @@
             type="button"
           >
             Next
-          </button>
-          <button
-            id="resume_reading_button"
-            class="btn btn-primary btn-lg px-4"
-            type="button"
-            style="display:none"
-          >
-            Resume Reading
           </button>
         </nav>
       </main>

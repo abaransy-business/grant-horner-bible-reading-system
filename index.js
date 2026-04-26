@@ -194,7 +194,6 @@ const loadHighlights = async (chapterCode) => {
 const initializeApp = async () => {
   const nextChapterButton = document.getElementById("next_chapter_button");
   const previousChapterButton = document.getElementById("previous_chapter_button");
-  const resumeReadingButton = document.getElementById("resume_reading_button");
   const instructionsButton = document.getElementById("instructions_button");
   const myProgressButton = document.getElementById("my_progress_button");
   const highlightsButton = document.getElementById("highlights_button");
@@ -232,7 +231,7 @@ const initializeApp = async () => {
 
   const removeBtn = document.createElement('span');
   removeBtn.className = 'highlight-remove-btn';
-  removeBtn.textContent = '✕';
+  removeBtn.textContent = 'Remove Highlight';
   removeBtn.style.display = 'none';
   removeBtn.addEventListener('click', async () => {
     const id = removeBtn.dataset.targetId;
@@ -259,12 +258,16 @@ const initializeApp = async () => {
     popup.classList.add('visible');
     const w = popup.offsetWidth;
     const h = popup.offsetHeight;
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      popup.style.left = `${Math.max(8, (window.innerWidth - w) / 2)}px`;
+      popup.style.top = `${window.innerHeight - h - 24}px`;
+      return;
+    }
     const x = rect.left + rect.width / 2;
     const y = rect.top;
-    const touchDevice = window.matchMedia('(pointer: coarse)').matches;
     let left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
-    let top = touchDevice ? y + rect.height + 10 : y - h - 10;
-    if (!touchDevice && top < 8) top = y + rect.height + 6;
+    let top = y - h - 10;
+    if (top < 8) top = y + rect.height + 6;
     popup.style.left = `${left}px`;
     popup.style.top = `${top}px`;
   };
@@ -297,7 +300,6 @@ const initializeApp = async () => {
 
   // Show color popup on text selection (mouseup for desktop, selectionchange for iOS)
   const tryShowSelectionPopup = () => {
-    if (pendingText) return; // color popup already open — don't interfere
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
     const range = selection.getRangeAt(0);
@@ -305,7 +307,13 @@ const initializeApp = async () => {
     const text = selection.toString().trim();
     if (!text) return;
     pendingRange = range.cloneRange();
-    showColorPopup(text);
+    if (pendingText) {
+      // Popup already visible — update data without repositioning (avoids moving popup during tap)
+      pendingText = text;
+      anchorRectFn = () => pendingRange.getBoundingClientRect();
+    } else {
+      showColorPopup(text);
+    }
   };
 
   document.addEventListener('mouseup', (e) => {
@@ -354,22 +362,24 @@ const initializeApp = async () => {
     loadHighlights(chapterCode);
   };
 
+  const previewBanner = document.getElementById('preview_banner');
+
   const enterPreview = (previewCode) => {
     setCurrentChapter(previewCode);
     nextChapterButton.style.display = 'none';
     previousChapterButton.style.display = 'none';
-    resumeReadingButton.style.display = '';
+    previewBanner.style.setProperty('display', 'flex', 'important');
   };
 
   const exitPreview = () => {
     setCurrentChapter(currentChapterCode);
     nextChapterButton.style.display = '';
     previousChapterButton.style.display = '';
-    resumeReadingButton.style.display = 'none';
     previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
+    previewBanner.style.setProperty('display', 'none', 'important');
   };
 
-  resumeReadingButton.addEventListener('click', exitPreview);
+  document.getElementById('resume_reading_banner_button').addEventListener('click', exitPreview);
 
   goToResourceButton.addEventListener("click", () => {
     const selectedValue = document.getElementById("resources_dropdown").value;
