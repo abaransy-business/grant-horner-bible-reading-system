@@ -359,16 +359,20 @@ const initializeApp = async () => {
 
   const setCurrentChapter = (chapterCode) => {
     chapterContent.mdContent = findCurrentChapter(chapterCode);
-    loadHighlights(chapterCode);
+    return loadHighlights(chapterCode);
   };
 
   const previewBanner = document.getElementById('preview_banner');
 
-  const enterPreview = (previewCode) => {
-    setCurrentChapter(previewCode);
+  const enterPreview = async (previewCode, scrollToId) => {
+    await setCurrentChapter(previewCode);
     nextChapterButton.style.display = 'none';
     previousChapterButton.style.display = 'none';
     previewBanner.style.setProperty('display', 'flex', 'important');
+    if (scrollToId) {
+      const mark = chapterContent.querySelector(`mark[data-highlight-id="${scrollToId}"]`);
+      mark?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const exitPreview = () => {
@@ -486,8 +490,8 @@ const initializeApp = async () => {
           const [listIdx, bookmark] = h.chapter_code.split('-');
           parts[0] = listIdx;
           parts[Number(listIdx) + 1] = bookmark;
-          enterPreview(parts.join('-'));
           highlightsModal.hide();
+          enterPreview(parts.join('-'), h.id);
         });
 
         highlightsList.appendChild(row);
