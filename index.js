@@ -402,6 +402,7 @@ const initializeApp = async () => {
     setCurrentChapter(newChapterCode);
     saveChapterCode(newChapterCode);
     previousChapterButton.disabled = false;
+    chapterContent.scrollIntoView({ behavior: 'instant' });
   });
 
   previousChapterButton.addEventListener("click", () => {
@@ -410,6 +411,7 @@ const initializeApp = async () => {
     setCurrentChapter(newChapterCode);
     saveChapterCode(newChapterCode);
     previousChapterButton.disabled = newChapterCode === DEFAULT_CODE;
+    chapterContent.scrollIntoView({ behavior: 'instant' });
   });
 
   myProgressButton.addEventListener("click", () => {
