@@ -11,13 +11,13 @@ const getChapterKey = (chapterCode) => {
 };
 
 const HIGHLIGHT_COLORS = [
-  { swatch: '#ffd60a', value: 'rgba(255, 214, 10, 0.4)' },
-  { swatch: '#57cc99', value: 'rgba(87, 204, 153, 0.4)' },
-  { swatch: '#74b9e8', value: 'rgba(116, 185, 232, 0.4)' },
-  { swatch: '#f48fb1', value: 'rgba(244, 143, 177, 0.4)' },
-  { swatch: '#ff6b6b', value: 'rgba(255, 107, 107, 0.4)' },
-  { swatch: '#c084fc', value: 'rgba(192, 132, 252, 0.4)' },
-  { swatch: '#fb923c', value: 'rgba(251, 146, 60, 0.4)' },
+  { swatch: "#ffd60a", value: "rgba(255, 214, 10, 0.4)" },
+  { swatch: "#57cc99", value: "rgba(87, 204, 153, 0.4)" },
+  { swatch: "#74b9e8", value: "rgba(116, 185, 232, 0.4)" },
+  { swatch: "#f48fb1", value: "rgba(244, 143, 177, 0.4)" },
+  { swatch: "#ff6b6b", value: "rgba(255, 107, 107, 0.4)" },
+  { swatch: "#c084fc", value: "rgba(192, 132, 252, 0.4)" },
+  { swatch: "#fb923c", value: "rgba(251, 146, 60, 0.4)" },
 ];
 
 const findCurrentChapter = (chapterCode) => {
@@ -34,7 +34,8 @@ const findNextChapter = (chapterCode) => {
   const nextListIndex = (currentListIndex + 1) % 10;
   const nextChapter = findCurrentChapter(`${nextListIndex}-${parts.join("-")}`);
 
-  const [bookIndexAsString, chapterIndexAsString] = parts[currentListIndex].split("_");
+  const [bookIndexAsString, chapterIndexAsString] =
+    parts[currentListIndex].split("_");
   const bookIndex = Number(bookIndexAsString);
   const chapterIndex = Number(chapterIndexAsString);
 
@@ -54,7 +55,8 @@ const findPreviousChapter = (chapterCode) => {
   const currentListIndex = Number(parts.splice(0, 1)[0]);
   const prevListIndex = (currentListIndex - 1 + 10) % 10;
 
-  const [bookIndexAsString, chapterIndexAsString] = parts[prevListIndex].split("_");
+  const [bookIndexAsString, chapterIndexAsString] =
+    parts[prevListIndex].split("_");
   const bookIndex = Number(bookIndexAsString);
   const chapterIndex = Number(chapterIndexAsString);
 
@@ -68,13 +70,16 @@ const findPreviousChapter = (chapterCode) => {
   }
 
   const newChapterCode = `${prevListIndex}-${parts.join("-")}`;
-  return { previousChapter: findCurrentChapter(newChapterCode), newChapterCode };
+  return {
+    previousChapter: findCurrentChapter(newChapterCode),
+    newChapterCode,
+  };
 };
 
 const saveChapterCode = (chapterCode) => {
-  fetch('/api/chapter-code', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  fetch("/api/chapter-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chapterCode }),
   });
 };
@@ -82,12 +87,16 @@ const saveChapterCode = (chapterCode) => {
 const mapNormToOrig = (origText, normOff) => {
   let start = 0;
   while (start < origText.length && /\s/.test(origText[start])) start++;
-  let n = 0, inWs = false;
+  let n = 0,
+    inWs = false;
   for (let i = start; i <= origText.length; i++) {
     if (n === normOff) return i;
     if (i === origText.length) break;
     if (/\s/.test(origText[i])) {
-      if (!inWs) { n++; inWs = true; }
+      if (!inWs) {
+        n++;
+        inWs = true;
+      }
     } else {
       n++;
       inWs = false;
@@ -111,23 +120,25 @@ const applyHighlight = (container, selectedText, color, id) => {
       const range = document.createRange();
       range.setStart(node, idx);
       range.setEnd(node, idx + selectedText.length);
-      const mark = document.createElement('mark');
+      const mark = document.createElement("mark");
       mark.style.backgroundColor = color;
-      mark.style.color = 'inherit';
+      mark.style.color = "inherit";
       mark.dataset.highlightId = id;
-      try { range.surroundContents(mark); } catch (e) {}
+      try {
+        range.surroundContents(mark);
+      } catch (e) {}
       return;
     }
   }
 
   // Multi-node path: normalize whitespace and search across nodes
-  const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  const norm = (s) => s.replace(/\s+/g, " ").trim();
   const target = norm(selectedText);
   const segs = textNodes
-    .map(node => ({ node, normText: norm(node.textContent) }))
-    .filter(s => s.normText.length > 0);
+    .map((node) => ({ node, normText: norm(node.textContent) }))
+    .filter((s) => s.normText.length > 0);
 
-  const joined = segs.map(s => s.normText).join(' ');
+  const joined = segs.map((s) => s.normText).join(" ");
   const matchIdx = joined.indexOf(target);
   if (matchIdx === -1) return;
   const matchEnd = matchIdx + target.length;
@@ -144,11 +155,13 @@ const applyHighlight = (container, selectedText, color, id) => {
         const range = document.createRange();
         range.setStart(node, origStart);
         range.setEnd(node, origEnd);
-        const mark = document.createElement('mark');
+        const mark = document.createElement("mark");
         mark.style.backgroundColor = color;
-        mark.style.color = 'inherit';
+        mark.style.color = "inherit";
         mark.dataset.highlightId = id;
-        try { range.surroundContents(mark); } catch (e) {}
+        try {
+          range.surroundContents(mark);
+        } catch (e) {}
       }
     }
     pos += normText.length + 1;
@@ -163,18 +176,21 @@ const applyHighlightFromRange = (container, range, color, id) => {
     if (!range.intersectsNode(node)) continue;
     if (!node.textContent.trim()) continue;
     const start = node === range.startContainer ? range.startOffset : 0;
-    const end = node === range.endContainer ? range.endOffset : node.textContent.length;
+    const end =
+      node === range.endContainer ? range.endOffset : node.textContent.length;
     if (start < end) segments.push({ node, start, end });
   }
   for (const { node, start, end } of segments) {
     const r = document.createRange();
     r.setStart(node, start);
     r.setEnd(node, end);
-    const mark = document.createElement('mark');
+    const mark = document.createElement("mark");
     mark.style.backgroundColor = color;
-    mark.style.color = 'inherit';
+    mark.style.color = "inherit";
     mark.dataset.highlightId = id;
-    try { r.surroundContents(mark); } catch (e) {}
+    try {
+      r.surroundContents(mark);
+    } catch (e) {}
   }
 };
 
@@ -184,8 +200,10 @@ const loadHighlights = async (chapterCode) => {
     const highlights = await fetch(
       `/api/highlights?chapterCode=${encodeURIComponent(getChapterKey(chapterCode))}`,
     ).then((r) => r.json());
-    const container = document.getElementById('chapter_content');
-    highlights.forEach((h) => applyHighlight(container, h.selected_text, h.color, h.id));
+    const container = document.getElementById("chapter_content");
+    highlights.forEach((h) =>
+      applyHighlight(container, h.selected_text, h.color, h.id),
+    );
   } catch (e) {
     // Silently fail
   }
@@ -193,13 +211,17 @@ const loadHighlights = async (chapterCode) => {
 
 const initializeApp = async () => {
   const nextChapterButton = document.getElementById("next_chapter_button");
-  const previousChapterButton = document.getElementById("previous_chapter_button");
+  const previousChapterButton = document.getElementById(
+    "previous_chapter_button",
+  );
   const instructionsButton = document.getElementById("instructions_button");
   const myProgressButton = document.getElementById("my_progress_button");
   const highlightsButton = document.getElementById("highlights_button");
-  const themeToggleButton = document.getElementById("theme_toggle_button");
+  const settingsButton = document.getElementById("settings_button");
+  const resourcesButton = document.getElementById("resources_button");
   const goToResourceButton = document.getElementById("go_to_resource_button");
   const fontSizeSlider = document.getElementById("font_size_control");
+  const themeToggle = document.getElementById("theme_toggle");
   const chapterContent = document.getElementById("chapter_content");
   const popup = document.getElementById("highlight_popup");
 
@@ -208,14 +230,14 @@ const initializeApp = async () => {
   let pendingRange = null;
 
   HIGHLIGHT_COLORS.forEach(({ swatch, value }) => {
-    const btn = document.createElement('button');
-    btn.className = 'highlight-swatch';
+    const btn = document.createElement("button");
+    btn.className = "highlight-swatch";
     btn.style.backgroundColor = swatch;
-    btn.addEventListener('click', async () => {
+    btn.addEventListener("click", async () => {
       if (!pendingText || !pendingRange) return;
-      const { id } = await fetch('/api/highlights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const { id } = await fetch("/api/highlights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chapterCode: getChapterKey(displayedChapterCode),
           selectedText: pendingText,
@@ -229,19 +251,21 @@ const initializeApp = async () => {
     popup.appendChild(btn);
   });
 
-  const removeBtn = document.createElement('span');
-  removeBtn.className = 'highlight-remove-btn';
-  removeBtn.textContent = 'Remove Highlight';
-  removeBtn.style.display = 'none';
-  removeBtn.addEventListener('click', async () => {
+  const removeBtn = document.createElement("span");
+  removeBtn.className = "highlight-remove-btn";
+  removeBtn.textContent = "Remove Highlight";
+  removeBtn.style.display = "none";
+  removeBtn.addEventListener("click", async () => {
     const id = removeBtn.dataset.targetId;
     if (!id) return;
-    await fetch(`/api/highlights/${id}`, { method: 'DELETE' });
-    chapterContent.querySelectorAll(`mark[data-highlight-id="${id}"]`).forEach((mark) => {
-      const parent = mark.parentNode;
-      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
-      parent.removeChild(mark);
-    });
+    await fetch(`/api/highlights/${id}`, { method: "DELETE" });
+    chapterContent
+      .querySelectorAll(`mark[data-highlight-id="${id}"]`)
+      .forEach((mark) => {
+        const parent = mark.parentNode;
+        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+        parent.removeChild(mark);
+      });
     hidePopup();
   });
   popup.appendChild(removeBtn);
@@ -252,13 +276,13 @@ const initializeApp = async () => {
     if (!anchorRectFn) return;
     const rect = anchorRectFn();
     if (rect.bottom < 0 || rect.top > window.innerHeight) {
-      popup.classList.remove('visible');
+      popup.classList.remove("visible");
       return;
     }
-    popup.classList.add('visible');
+    popup.classList.add("visible");
     const w = popup.offsetWidth;
     const h = popup.offsetHeight;
-    if (window.matchMedia('(pointer: coarse)').matches) {
+    if (window.matchMedia("(pointer: coarse)").matches) {
       popup.style.left = `${Math.max(8, (window.innerWidth - w) / 2)}px`;
       popup.style.top = `${window.innerHeight - h - 24}px`;
       return;
@@ -274,25 +298,29 @@ const initializeApp = async () => {
 
   const showColorPopup = (text) => {
     pendingText = text;
-    [...popup.querySelectorAll('.highlight-swatch')].forEach((s) => (s.style.display = ''));
-    removeBtn.style.display = 'none';
+    [...popup.querySelectorAll(".highlight-swatch")].forEach(
+      (s) => (s.style.display = ""),
+    );
+    removeBtn.style.display = "none";
     anchorRectFn = () => pendingRange.getBoundingClientRect();
-    popup.classList.add('visible');
+    popup.classList.add("visible");
     positionFromAnchor();
   };
 
   const showRemovePopup = (mark, id) => {
     pendingText = null;
-    [...popup.querySelectorAll('.highlight-swatch')].forEach((s) => (s.style.display = 'none'));
-    removeBtn.style.display = '';
+    [...popup.querySelectorAll(".highlight-swatch")].forEach(
+      (s) => (s.style.display = "none"),
+    );
+    removeBtn.style.display = "";
     removeBtn.dataset.targetId = id;
     anchorRectFn = () => mark.getBoundingClientRect();
-    popup.classList.add('visible');
+    popup.classList.add("visible");
     positionFromAnchor();
   };
 
   const hidePopup = () => {
-    popup.classList.remove('visible');
+    popup.classList.remove("visible");
     pendingText = null;
     pendingRange = null;
     anchorRectFn = null;
@@ -316,46 +344,33 @@ const initializeApp = async () => {
     }
   };
 
-  document.addEventListener('mouseup', (e) => {
+  document.addEventListener("mouseup", (e) => {
     if (popup.contains(e.target)) return;
     setTimeout(tryShowSelectionPopup, 0);
   });
 
   let selectionChangeTimer = null;
-  document.addEventListener('selectionchange', () => {
+  document.addEventListener("selectionchange", () => {
     clearTimeout(selectionChangeTimer);
     selectionChangeTimer = setTimeout(tryShowSelectionPopup, 300);
   });
 
   // Show remove popup on mark click
-  chapterContent.addEventListener('click', (e) => {
-    const mark = e.target.closest('mark[data-highlight-id]');
+  chapterContent.addEventListener("click", (e) => {
+    const mark = e.target.closest("mark[data-highlight-id]");
     if (!mark) return;
     showRemovePopup(mark, mark.dataset.highlightId);
   });
 
   // Hide popup on mousedown outside
-  document.addEventListener('mousedown', (e) => {
+  document.addEventListener("mousedown", (e) => {
     if (popup.contains(e.target)) return;
-    if (e.target.closest('mark[data-highlight-id]')) return;
+    if (e.target.closest("mark[data-highlight-id]")) return;
     hidePopup();
   });
 
   // Reposition popup on scroll
-  document.addEventListener('scroll', positionFromAnchor, { passive: true });
-
-  // --- App setup ---
-  const showAlert = (message, type = "info") => {
-    const alertContainer = document.getElementById("alert_container");
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = [
-      `<div class="alert alert-${type} alert-dismissible fade show shadow-sm" role="alert">`,
-      `   <div>${message}</div>`,
-      '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-      "</div>",
-    ].join("");
-    alertContainer.append(wrapper);
-  };
+  document.addEventListener("scroll", positionFromAnchor, { passive: true });
 
   let displayedChapterCode = null;
 
@@ -365,33 +380,39 @@ const initializeApp = async () => {
     return loadHighlights(chapterCode);
   };
 
-  const previewBanner = document.getElementById('preview_banner');
+  const previewBanner = document.getElementById("preview_banner");
+
+  const stickyNav = document.getElementById("sticky_nav");
 
   const enterPreview = async (previewCode, scrollToId) => {
     await setCurrentChapter(previewCode);
-    nextChapterButton.style.display = 'none';
-    previousChapterButton.style.display = 'none';
-    previewBanner.style.setProperty('display', 'flex', 'important');
+    stickyNav.style.display = "none";
+    previewBanner.style.setProperty("display", "flex", "important");
     if (scrollToId) {
-      const mark = chapterContent.querySelector(`mark[data-highlight-id="${scrollToId}"]`);
-      mark?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const mark = chapterContent.querySelector(
+        `mark[data-highlight-id="${scrollToId}"]`,
+      );
+      mark?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
 
   const exitPreview = () => {
     setCurrentChapter(currentChapterCode);
-    nextChapterButton.style.display = '';
-    previousChapterButton.style.display = '';
+    stickyNav.style.display = "";
     previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
-    previewBanner.style.setProperty('display', 'none', 'important');
+    previewBanner.style.setProperty("display", "none", "important");
   };
 
-  document.getElementById('resume_reading_banner_button').addEventListener('click', exitPreview);
+  document
+    .getElementById("resume_reading_banner_button")
+    .addEventListener("click", exitPreview);
 
-  goToResourceButton.addEventListener("click", () => {
-    const selectedValue = document.getElementById("resources_dropdown").value;
+  goToResourceButton?.addEventListener("click", () => {
+    const selectedValue = document.getElementById("resources_dropdown")?.value;
+    if (!selectedValue) return;
     window.open(
-      "https://github.com/abaransy-business/grant-horner-bible-reading-system/tree/main/resources/" + selectedValue,
+      "https://github.com/abaransy-business/grant-horner-bible-reading-system/tree/main/resources/" +
+        selectedValue,
       "_blank",
     );
   });
@@ -402,7 +423,7 @@ const initializeApp = async () => {
     setCurrentChapter(newChapterCode);
     saveChapterCode(newChapterCode);
     previousChapterButton.disabled = false;
-    chapterContent.scrollIntoView({ behavior: 'instant' });
+    chapterContent.scrollIntoView({ behavior: "instant" });
   });
 
   previousChapterButton.addEventListener("click", () => {
@@ -411,31 +432,26 @@ const initializeApp = async () => {
     setCurrentChapter(newChapterCode);
     saveChapterCode(newChapterCode);
     previousChapterButton.disabled = newChapterCode === DEFAULT_CODE;
-    chapterContent.scrollIntoView({ behavior: 'instant' });
+    chapterContent.scrollIntoView({ behavior: "instant" });
   });
 
+  const myProgressModal = new bootstrap.Modal(document.getElementById('my_progress_modal'));
+  const myProgressBody = document.getElementById('my_progress_body');
+
   myProgressButton.addEventListener("click", () => {
-    const alertContainer = document.getElementById("alert_container");
-    const existing = alertContainer.querySelector('[data-progress-alert]');
-    if (existing) { existing.remove(); return; }
     const bookmarks = currentChapterCode.split("-").slice(1);
-    const lines = bookmarks.map((bookmark, i) => {
+    myProgressBody.innerHTML = bookmarks.map((bookmark, i) => {
       const [bookIndex, chapterIndex] = bookmark.split("_");
-      return `List ${i + 1}: Book ${Number(bookIndex) + 1}, Chapter ${Number(chapterIndex) + 1}`;
-    });
-    const el = document.createElement("div");
-    el.className = "alert alert-info alert-dismissible fade show shadow-sm";
-    el.setAttribute("role", "alert");
-    el.dataset.progressAlert = "1";
-    el.innerHTML = `<div>${lines.join("<br>")}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-    alertContainer.append(el);
+      return `<div>List ${i + 1}: Book ${Number(bookIndex) + 1}, Chapter ${Number(chapterIndex) + 1}</div>`;
+    }).join('');
+    myProgressModal.show();
   });
 
   const getChapterInfo = (chapterKey) => {
-    const [listIdx, bookmark] = chapterKey.split('-');
-    const [bookIdx, chapterIdx] = bookmark.split('_');
-    const chapter = fullLists[Number(listIdx)]?.[Number(bookIdx)]?.[Number(chapterIdx)];
+    const [listIdx, bookmark] = chapterKey.split("-");
+    const [bookIdx, chapterIdx] = bookmark.split("_");
+    const chapter =
+      fullLists[Number(listIdx)]?.[Number(bookIdx)]?.[Number(chapterIdx)];
     if (!chapter) return null;
     const match = chapter.match(/^#\s+(.+?)\s+-\s+Chapter\s+(\d+)/m);
     return match ? { bookName: match[1], chapterNum: Number(match[2]) } : null;
@@ -446,23 +462,27 @@ const initializeApp = async () => {
     return match ? match.swatch : rgbaColor;
   };
 
-  const highlightsModal = new bootstrap.Modal(document.getElementById('highlights_modal'));
-  const highlightsList = document.getElementById('highlights_list');
-  const highlightsSearch = document.getElementById('highlights_search');
+  const highlightsModal = new bootstrap.Modal(
+    document.getElementById("highlights_modal"),
+  );
+  const highlightsList = document.getElementById("highlights_list");
+  const highlightsSearch = document.getElementById("highlights_search");
   let allHighlights = [];
 
-  const renderHighlights = (query = '') => {
+  const renderHighlights = (query = "") => {
     const q = query.toLowerCase();
-    highlightsList.innerHTML = '';
+    highlightsList.innerHTML = "";
 
     const filtered = allHighlights.filter((h) => {
       if (!q) return true;
-      return h.selected_text.toLowerCase().includes(q) ||
-        h._bookName.toLowerCase().includes(q);
+      return (
+        h.selected_text.toLowerCase().includes(q) ||
+        h._bookName.toLowerCase().includes(q)
+      );
     });
 
     if (filtered.length === 0) {
-      highlightsList.innerHTML = `<p class="text-muted">${allHighlights.length === 0 ? 'You have no highlights yet.' : 'No highlights match your search.'}</p>`;
+      highlightsList.innerHTML = `<p class="text-muted">${allHighlights.length === 0 ? "You have no highlights yet." : "No highlights match your search."}</p>`;
       return;
     }
 
@@ -474,38 +494,39 @@ const initializeApp = async () => {
     }
 
     for (const [bookName, items] of Object.entries(groups)) {
-      const header = document.createElement('h6');
-      header.className = 'fw-bold mt-3 mb-2';
+      const header = document.createElement("h6");
+      header.className = "fw-bold mt-3 mb-2";
       header.textContent = bookName;
       highlightsList.appendChild(header);
 
       for (const h of items) {
-        const row = document.createElement('div');
-        row.className = 'd-flex align-items-center gap-2 py-2 px-2 rounded mb-1 highlight-list-item';
+        const row = document.createElement("div");
+        row.className =
+          "d-flex align-items-center gap-2 py-2 px-2 rounded mb-1 highlight-list-item";
 
-        const dot = document.createElement('span');
-        dot.className = 'flex-shrink-0';
+        const dot = document.createElement("span");
+        dot.className = "flex-shrink-0";
         dot.style.cssText = `width:12px;height:12px;border-radius:50%;background:${getSwatchColor(h.color)};display:inline-block`;
 
-        const text = document.createElement('span');
-        text.className = 'flex-grow-1 text-truncate';
+        const text = document.createElement("span");
+        text.className = "flex-grow-1 text-truncate";
         text.textContent = h.selected_text;
 
-        const chapterLabel = document.createElement('small');
-        chapterLabel.className = 'text-muted flex-shrink-0';
+        const chapterLabel = document.createElement("small");
+        chapterLabel.className = "text-muted flex-shrink-0";
         chapterLabel.textContent = `Ch. ${h._chapterNum}`;
 
         row.appendChild(dot);
         row.appendChild(text);
         row.appendChild(chapterLabel);
 
-        row.addEventListener('click', () => {
-          const parts = currentChapterCode.split('-');
-          const [listIdx, bookmark] = h.chapter_code.split('-');
+        row.addEventListener("click", () => {
+          const parts = currentChapterCode.split("-");
+          const [listIdx, bookmark] = h.chapter_code.split("-");
           parts[0] = listIdx;
           parts[Number(listIdx) + 1] = bookmark;
           highlightsModal.hide();
-          enterPreview(parts.join('-'), h.id);
+          enterPreview(parts.join("-"), h.id);
         });
 
         highlightsList.appendChild(row);
@@ -513,63 +534,85 @@ const initializeApp = async () => {
     }
   };
 
-  highlightsButton.addEventListener('click', async () => {
+  highlightsButton.addEventListener("click", async () => {
     highlightsList.innerHTML = '<p class="text-muted">Loading...</p>';
-    highlightsSearch.value = '';
+    highlightsSearch.value = "";
     highlightsModal.show();
     try {
-      const raw = await fetch('/api/highlights/all').then((r) => r.json());
+      const raw = await fetch("/api/highlights/all").then((r) => r.json());
       allHighlights = raw.flatMap((h) => {
         const info = getChapterInfo(h.chapter_code);
         if (!info) return [];
-        return [{ ...h, _bookName: info.bookName, _chapterNum: info.chapterNum }];
+        return [
+          { ...h, _bookName: info.bookName, _chapterNum: info.chapterNum },
+        ];
       });
-      allHighlights.sort((a, b) => a._bookName.localeCompare(b._bookName) || a._chapterNum - b._chapterNum);
+      allHighlights.sort(
+        (a, b) =>
+          a._bookName.localeCompare(b._bookName) ||
+          a._chapterNum - b._chapterNum,
+      );
       renderHighlights();
     } catch (e) {
-      highlightsList.innerHTML = '<p class="text-muted">Failed to load highlights.</p>';
+      highlightsList.innerHTML =
+        '<p class="text-muted">Failed to load highlights.</p>';
     }
   });
 
-  highlightsSearch.addEventListener('input', () => renderHighlights(highlightsSearch.value));
+  highlightsSearch.addEventListener("input", () =>
+    renderHighlights(highlightsSearch.value),
+  );
 
-  instructionsButton.addEventListener("click", () => {
-    const alertContainer = document.getElementById("alert_container");
-    if (alertContainer.querySelector('[data-instructions-alert]')) return;
-    const el = document.createElement("div");
-    el.className = "alert alert-info alert-dismissible fade show shadow-sm";
-    el.setAttribute("role", "alert");
-    el.dataset.instructionsAlert = "1";
-    el.innerHTML = `<div><strong>Grant Horner's Bible-Reading System</strong><br><br>
-      Read 10 chapters per day — one from each of 10 lists organized by biblical genre:
-      Gospels, Law, NT Letters (1 &amp; 2), Wisdom, Psalms, Proverbs, OT History, Prophets, and Acts.
-      Because each list has a different number of chapters, they cycle independently —
-      the combination of readings changes every day and never repeats.
-      Use "Next" to advance through your reading lists — your progress is saved automatically.
-      Select any text to highlight it in one of several colors, and use "Highlights" to browse and revisit everything you've marked.</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-    alertContainer.append(el);
+  const instructionsModal = new bootstrap.Modal(document.getElementById('instructions_modal'));
+  instructionsButton.addEventListener("click", () => instructionsModal.show());
+
+  const settingsModal = new bootstrap.Modal(document.getElementById('settings_modal'));
+  settingsButton.addEventListener("click", () => settingsModal.show());
+
+  const resourcesModal = new bootstrap.Modal(document.getElementById('resources_modal'));
+  resourcesButton.addEventListener("click", () => resourcesModal.show());
+
+  const fontSizeValue = document.getElementById("font_size_value");
+
+  const applyFontSize = (size) => {
+    fontSizeSlider.value = size;
+    fontSizeValue.textContent = size;
+    chapterContent.style.fontSize = `${size}px`;
+  };
+
+  let fontSizeTimer = null;
+  fontSizeSlider.addEventListener("input", (e) => {
+    applyFontSize(e.target.value);
+    clearTimeout(fontSizeTimer);
+    fontSizeTimer = setTimeout(() => {
+      fetch("/api/font-size", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fontSize: Number(e.target.value) }),
+      });
+    }, 500);
   });
 
-  themeToggleButton.addEventListener("click", () => {
-    const html = document.documentElement;
-    const newTheme = html.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
-    html.setAttribute("data-bs-theme", newTheme);
-    fetch('/api/theme', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+  const applyTheme = (theme) => {
+    document.documentElement.setAttribute("data-bs-theme", theme);
+    themeToggle.checked = theme === "dark";
+  };
+
+  themeToggle.addEventListener("change", () => {
+    const newTheme = themeToggle.checked ? "dark" : "light";
+    applyTheme(newTheme);
+    fetch("/api/theme", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ theme: newTheme }),
     });
   });
 
-  fontSizeSlider.addEventListener("input", (e) => {
-    chapterContent.style.fontSize = `${e.target.value}px`;
-  });
-
-  chapterContent.style.fontSize = `${fontSizeSlider.value}px`;
-
-  const { chapterCode, theme } = await fetch('/api/chapter-code').then((r) => r.json());
-  document.documentElement.setAttribute('data-bs-theme', theme);
+  const { chapterCode, theme, fontSize } = await fetch("/api/chapter-code").then((r) =>
+    r.json(),
+  );
+  applyTheme(theme);
+  applyFontSize(fontSize ?? 18);
   currentChapterCode = chapterCode;
   previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
   setCurrentChapter(currentChapterCode);

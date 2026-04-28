@@ -111,10 +111,11 @@ app.get('/app', requireAuth, (req, res) => {
 
 app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT chapter_code, theme FROM users WHERE id = $1', [req.user.id]);
+    const { rows } = await pool.query('SELECT chapter_code, theme, font_size FROM users WHERE id = $1', [req.user.id]);
     const chapterCode = rows[0]?.chapter_code ?? '0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0';
     const theme = rows[0]?.theme ?? 'dark';
-    res.json({ chapterCode, theme });
+    const fontSize = rows[0]?.font_size ?? 18;
+    res.json({ chapterCode, theme, fontSize });
   } catch (err) {
     next(err);
   }
@@ -123,6 +124,13 @@ app.get('/api/chapter-code', requireAuth, async (req, res, next) => {
 app.post('/api/theme', requireAuth, express.json(), async (req, res, next) => {
   try {
     await pool.query('UPDATE users SET theme = $1 WHERE id = $2', [req.body.theme, req.user.id]);
+    res.sendStatus(200);
+  } catch (err) { next(err); }
+});
+
+app.post('/api/font-size', requireAuth, express.json(), async (req, res, next) => {
+  try {
+    await pool.query('UPDATE users SET font_size = $1 WHERE id = $2', [req.body.fontSize, req.user.id]);
     res.sendStatus(200);
   } catch (err) { next(err); }
 });
