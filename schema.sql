@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS chapter_code TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'dark';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS font_size INTEGER NOT NULL DEFAULT 18;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS position INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS max_position INTEGER NOT NULL DEFAULT 0;
 -- Required by connect-pg-simple
 CREATE TABLE IF NOT EXISTS session (
   sid    VARCHAR NOT NULL COLLATE "default" PRIMARY KEY,
@@ -23,4 +25,23 @@ CREATE TABLE IF NOT EXISTS highlights (
   selected_text TEXT NOT NULL,
   color         TEXT NOT NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS list_completions (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  list_index SMALLINT NOT NULL,
+  count      INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, list_index)
+);
+
+CREATE TABLE IF NOT EXISTS book_completions (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  list_index SMALLINT NOT NULL,
+  book_index SMALLINT NOT NULL,
+  count      INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, list_index, book_index)
 );

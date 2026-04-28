@@ -39,15 +39,28 @@ const findNextChapter = (chapterCode) => {
   const bookIndex = Number(bookIndexAsString);
   const chapterIndex = Number(chapterIndexAsString);
 
+  let bookCompleted = false;
+  let listCompleted = false;
+
   if (fullLists[currentListIndex][bookIndex][chapterIndex + 1]) {
     parts[currentListIndex] = `${bookIndexAsString}_${chapterIndex + 1}`;
   } else if (fullLists[currentListIndex][bookIndex + 1]?.[0]) {
     parts[currentListIndex] = `${bookIndex + 1}_0`;
+    bookCompleted = true;
   } else {
     parts[currentListIndex] = "0_0";
+    bookCompleted = true;
+    listCompleted = true;
   }
 
-  return { nextChapter, newChapterCode: `${nextListIndex}-${parts.join("-")}` };
+  return {
+    nextChapter,
+    newChapterCode: `${nextListIndex}-${parts.join("-")}`,
+    completedListIndex: currentListIndex,
+    completedBookIndex: bookIndex,
+    bookCompleted,
+    listCompleted,
+  };
 };
 
 const findPreviousChapter = (chapterCode) => {
@@ -76,12 +89,26 @@ const findPreviousChapter = (chapterCode) => {
   };
 };
 
-const saveChapterCode = (chapterCode) => {
-  fetch("/api/chapter-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chapterCode }),
-  });
+const showError = (message) => {
+  const toastEl = document.getElementById("error_toast");
+  if (!toastEl) return;
+  document.getElementById("error_toast_body").textContent = message;
+  bootstrap.Toast.getOrCreateInstance(toastEl).show();
+};
+
+const apiFetch = async (url, options) => {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (err) {
+    showError("Network error. Please check your connection and try again.");
+    throw err;
+  }
+  if (!res.ok) {
+    showError("Something went wrong. Please try again.");
+    throw new Error(`${url} responded ${res.status}`);
+  }
+  return res;
 };
 
 const mapNormToOrig = (origText, normOff) => {
@@ -197,7 +224,7 @@ const applyHighlightFromRange = (container, range, color, id) => {
 const loadHighlights = async (chapterCode) => {
   await new Promise((r) => setTimeout(r, 50));
   try {
-    const highlights = await fetch(
+    const highlights = await apiFetch(
       `/api/highlights?chapterCode=${encodeURIComponent(getChapterKey(chapterCode))}`,
     ).then((r) => r.json());
     const container = document.getElementById("chapter_content");
@@ -205,7 +232,7 @@ const loadHighlights = async (chapterCode) => {
       applyHighlight(container, h.selected_text, h.color, h.id),
     );
   } catch (e) {
-    // Silently fail
+    // Toast already shown by apiFetch
   }
 };
 
@@ -235,18 +262,22 @@ const initializeApp = async () => {
     btn.style.backgroundColor = swatch;
     btn.addEventListener("click", async () => {
       if (!pendingText || !pendingRange) return;
-      const { id } = await fetch("/api/highlights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chapterCode: getChapterKey(displayedChapterCode),
-          selectedText: pendingText,
-          color: value,
-        }),
-      }).then((r) => r.json());
-      applyHighlightFromRange(chapterContent, pendingRange, value, id);
-      window.getSelection().removeAllRanges();
-      hidePopup();
+      try {
+        const { id } = await apiFetch("/api/highlights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chapterCode: getChapterKey(displayedChapterCode),
+            selectedText: pendingText,
+            color: value,
+          }),
+        }).then((r) => r.json());
+        applyHighlightFromRange(chapterContent, pendingRange, value, id);
+        window.getSelection().removeAllRanges();
+        hidePopup();
+      } catch (e) {
+        // Toast already shown by apiFetch
+      }
     });
     popup.appendChild(btn);
   });
@@ -258,15 +289,19 @@ const initializeApp = async () => {
   removeBtn.addEventListener("click", async () => {
     const id = removeBtn.dataset.targetId;
     if (!id) return;
-    await fetch(`/api/highlights/${id}`, { method: "DELETE" });
-    chapterContent
-      .querySelectorAll(`mark[data-highlight-id="${id}"]`)
-      .forEach((mark) => {
-        const parent = mark.parentNode;
-        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
-        parent.removeChild(mark);
-      });
-    hidePopup();
+    try {
+      await apiFetch(`/api/highlights/${id}`, { method: "DELETE" });
+      chapterContent
+        .querySelectorAll(`mark[data-highlight-id="${id}"]`)
+        .forEach((mark) => {
+          const parent = mark.parentNode;
+          while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+          parent.removeChild(mark);
+        });
+      hidePopup();
+    } catch (e) {
+      // Toast already shown by apiFetch
+    }
   });
   popup.appendChild(removeBtn);
 
@@ -423,34 +458,122 @@ const initializeApp = async () => {
     );
   });
 
-  nextChapterButton.addEventListener("click", () => {
-    const { newChapterCode } = findNextChapter(currentChapterCode);
-    currentChapterCode = newChapterCode;
-    setCurrentChapter(newChapterCode);
-    saveChapterCode(newChapterCode);
-    previousChapterButton.disabled = false;
-    chapterContent.scrollIntoView({ behavior: "instant" });
+  nextChapterButton.addEventListener("click", async () => {
+    const {
+      newChapterCode,
+      completedListIndex,
+      completedBookIndex,
+      bookCompleted,
+      listCompleted,
+    } = findNextChapter(currentChapterCode);
+
+    nextChapterButton.disabled = true;
+    previousChapterButton.disabled = true;
+    try {
+      await apiFetch("/api/advance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newChapterCode,
+          bookCompletion: bookCompleted
+            ? { listIndex: completedListIndex, bookIndex: completedBookIndex }
+            : null,
+          listCompletion: listCompleted
+            ? { listIndex: completedListIndex }
+            : null,
+        }),
+      });
+      currentChapterCode = newChapterCode;
+      setCurrentChapter(newChapterCode);
+      chapterContent.scrollIntoView({ behavior: "instant" });
+    } catch (err) {
+      // Toast already shown by apiFetch
+    } finally {
+      nextChapterButton.disabled = false;
+      previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
+    }
   });
 
-  previousChapterButton.addEventListener("click", () => {
+  previousChapterButton.addEventListener("click", async () => {
     const { newChapterCode } = findPreviousChapter(currentChapterCode);
-    currentChapterCode = newChapterCode;
-    setCurrentChapter(newChapterCode);
-    saveChapterCode(newChapterCode);
-    previousChapterButton.disabled = newChapterCode === DEFAULT_CODE;
-    chapterContent.scrollIntoView({ behavior: "instant" });
+    nextChapterButton.disabled = true;
+    previousChapterButton.disabled = true;
+    try {
+      await apiFetch("/api/back", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chapterCode: newChapterCode }),
+      });
+      currentChapterCode = newChapterCode;
+      setCurrentChapter(newChapterCode);
+      chapterContent.scrollIntoView({ behavior: "instant" });
+    } catch (err) {
+      // Toast already shown by apiFetch
+    } finally {
+      nextChapterButton.disabled = false;
+      previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
+    }
   });
 
-  const myProgressModal = new bootstrap.Modal(document.getElementById('my_progress_modal'));
-  const myProgressBody = document.getElementById('my_progress_body');
+  const myProgressModal = new bootstrap.Modal(
+    document.getElementById("my_progress_modal"),
+  );
+  const myProgressBody = document.getElementById("my_progress_body");
 
-  myProgressButton.addEventListener("click", () => {
+  myProgressButton.addEventListener("click", async () => {
     const bookmarks = currentChapterCode.split("-").slice(1);
-    myProgressBody.innerHTML = bookmarks.map((bookmark, i) => {
-      const [bookIndex, chapterIndex] = bookmark.split("_");
-      return `<div>List ${i + 1}: Book ${Number(bookIndex) + 1}, Chapter ${Number(chapterIndex) + 1}</div>`;
-    }).join('');
+    myProgressBody.innerHTML = '<p class="text-muted">Loading...</p>';
     myProgressModal.show();
+    try {
+      const { lists, books } = await apiFetch("/api/completions").then((r) =>
+        r.json(),
+      );
+      const listCounts = new Map(lists.map((l) => [l.list_index, l.count]));
+      const bookCounts = new Map(
+        books.map((b) => [`${b.list_index}-${b.book_index}`, b.count]),
+      );
+      const cards = bookmarks.map((bookmark, i) => {
+        const [bookIndexStr, chapterIndexStr] = bookmark.split("_");
+        const bookIndex = Number(bookIndexStr);
+        const chapterIndex = Number(chapterIndexStr);
+        const listCount = listCounts.get(i) ?? 0;
+        const bookCount = bookCounts.get(`${i}-${bookIndex}`) ?? 0;
+        const totalChapters = fullLists[i][bookIndex].length;
+        const chapterNum = chapterIndex + 1;
+        const progressPct = (chapterIndex / totalChapters) * 100;
+        const info = getChapterInfo(`${i}-${bookIndex}_${chapterIndex}`);
+        const bookName = info?.bookName ?? `Book ${bookIndex + 1}`;
+        const listTimes = listCount === 1 ? "time" : "times";
+        const bookTimes = bookCount === 1 ? "time" : "times";
+        return `
+          <div class="col-12 col-md-6">
+            <div class="card h-100">
+              <div class="card-body p-3 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-baseline mb-2">
+                  <small class="fw-semibold">List ${i + 1}</small>
+                  <small class="text-muted">
+                    <i class="bi bi-arrow-repeat"></i> List read ${listCount} ${listTimes}
+                  </small>
+                </div>
+                <h6 class="fw-bold mb-1 text-truncate" title="${bookName}">${bookName}</h6>
+                <div class="text-muted small">Chapter ${chapterNum} of ${totalChapters}</div>
+                <div class="progress my-2" style="height: 4px">
+                  <div class="progress-bar" style="width: ${progressPct}%"></div>
+                </div>
+                <small class="text-muted mt-auto">
+                  <i class="bi bi-book"></i> ${bookName} read ${bookCount} ${bookTimes}
+                </small>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      myProgressBody.innerHTML = `<div class="row g-2">${cards.join("")}</div>`;
+    } catch (e) {
+      // Toast already shown by apiFetch
+      myProgressBody.innerHTML =
+        '<p class="text-muted">Failed to load progress.</p>';
+    }
   });
 
   const getChapterInfo = (chapterKey) => {
@@ -545,7 +668,7 @@ const initializeApp = async () => {
     highlightsSearch.value = "";
     highlightsModal.show();
     try {
-      const raw = await fetch("/api/highlights/all").then((r) => r.json());
+      const raw = await apiFetch("/api/highlights/all").then((r) => r.json());
       allHighlights = raw.flatMap((h) => {
         const info = getChapterInfo(h.chapter_code);
         if (!info) return [];
@@ -560,6 +683,7 @@ const initializeApp = async () => {
       );
       renderHighlights();
     } catch (e) {
+      // Toast already shown by apiFetch
       highlightsList.innerHTML =
         '<p class="text-muted">Failed to load highlights.</p>';
     }
@@ -569,13 +693,19 @@ const initializeApp = async () => {
     renderHighlights(highlightsSearch.value),
   );
 
-  const instructionsModal = new bootstrap.Modal(document.getElementById('instructions_modal'));
+  const instructionsModal = new bootstrap.Modal(
+    document.getElementById("instructions_modal"),
+  );
   instructionsButton.addEventListener("click", () => instructionsModal.show());
 
-  const settingsModal = new bootstrap.Modal(document.getElementById('settings_modal'));
+  const settingsModal = new bootstrap.Modal(
+    document.getElementById("settings_modal"),
+  );
   settingsButton.addEventListener("click", () => settingsModal.show());
 
-  const resourcesModal = new bootstrap.Modal(document.getElementById('resources_modal'));
+  const resourcesModal = new bootstrap.Modal(
+    document.getElementById("resources_modal"),
+  );
   resourcesButton.addEventListener("click", () => resourcesModal.show());
 
   const fontSizeValue = document.getElementById("font_size_value");
@@ -591,10 +721,12 @@ const initializeApp = async () => {
     applyFontSize(e.target.value);
     clearTimeout(fontSizeTimer);
     fontSizeTimer = setTimeout(() => {
-      fetch("/api/font-size", {
+      apiFetch("/api/font-size", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fontSize: Number(e.target.value) }),
+      }).catch(() => {
+        // Toast already shown by apiFetch
       });
     }, 500);
   });
@@ -607,21 +739,27 @@ const initializeApp = async () => {
   themeToggle.addEventListener("change", () => {
     const newTheme = themeToggle.checked ? "dark" : "light";
     applyTheme(newTheme);
-    fetch("/api/theme", {
+    apiFetch("/api/theme", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ theme: newTheme }),
+    }).catch(() => {
+      // Toast already shown by apiFetch
     });
   });
 
-  const { chapterCode, theme, fontSize } = await fetch("/api/chapter-code").then((r) =>
-    r.json(),
-  );
-  applyTheme(theme);
-  applyFontSize(fontSize ?? 18);
-  currentChapterCode = chapterCode;
-  previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
-  setCurrentChapter(currentChapterCode);
+  try {
+    const { chapterCode, theme, fontSize } = await apiFetch(
+      "/api/chapter-code",
+    ).then((r) => r.json());
+    applyTheme(theme);
+    applyFontSize(fontSize ?? 18);
+    currentChapterCode = chapterCode;
+    previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
+    setCurrentChapter(currentChapterCode);
+  } catch (e) {
+    // Toast already shown by apiFetch
+  }
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
