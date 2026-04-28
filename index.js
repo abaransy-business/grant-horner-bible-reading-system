@@ -282,11 +282,17 @@ const initializeApp = async () => {
     popup.classList.add("visible");
     const w = popup.offsetWidth;
     const h = popup.offsetHeight;
+
     if (window.matchMedia("(pointer: coarse)").matches) {
       popup.style.left = `${Math.max(8, (window.innerWidth - w) / 2)}px`;
-      popup.style.top = `${window.innerHeight - h - 24}px`;
+      popup.style.top = "auto";
+      const navVisible = getComputedStyle(stickyNav).display !== "none";
+      const bottomOffset = navVisible ? stickyNav.offsetHeight + 16 : 24;
+      popup.style.bottom = `${bottomOffset}px`;
       return;
     }
+
+    popup.style.bottom = "auto";
     const x = rect.left + rect.width / 2;
     const y = rect.top;
     let left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
