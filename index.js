@@ -538,9 +538,21 @@ const initializeApp = async () => {
         const chapterIndex = Number(chapterIndexStr);
         const listCount = listCounts.get(i) ?? 0;
         const bookCount = bookCounts.get(`${i}-${bookIndex}`) ?? 0;
+        const totalBooks = fullLists[i].length;
         const totalChapters = fullLists[i][bookIndex].length;
+        const bookNum = bookIndex + 1;
         const chapterNum = chapterIndex + 1;
-        const progressPct = (chapterIndex / totalChapters) * 100;
+        const totalChaptersInList = fullLists[i].reduce(
+          (sum, book) => sum + book.length,
+          0,
+        );
+        let chaptersReadInList = chapterIndex;
+        for (let b = 0; b < bookIndex; b++) {
+          chaptersReadInList += fullLists[i][b].length;
+        }
+        const listProgressPct =
+          (chaptersReadInList / totalChaptersInList) * 100;
+        const bookProgressPct = (chapterIndex / totalChapters) * 100;
         const info = getChapterInfo(`${i}-${bookIndex}_${chapterIndex}`);
         const bookName = info?.bookName ?? `Book ${bookIndex + 1}`;
         const listTimes = listCount === 1 ? "time" : "times";
@@ -548,21 +560,31 @@ const initializeApp = async () => {
         return `
           <div class="col-12 col-md-6">
             <div class="card h-100">
-              <div class="card-body p-3 d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-baseline mb-2">
-                  <small class="fw-semibold">List ${i + 1}</small>
-                  <small class="text-muted">
-                    <i class="bi bi-arrow-repeat"></i> List read ${listCount} ${listTimes}
-                  </small>
+              <div class="card-body p-3 d-flex flex-column gap-3">
+                <div>
+                  <div class="d-flex justify-content-between align-items-baseline mb-1">
+                    <small class="fw-semibold">List ${i + 1}</small>
+                    <small class="text-muted">
+                      <i class="bi bi-arrow-repeat"></i> Read ${listCount} ${listTimes}
+                    </small>
+                  </div>
+                  <div class="text-muted small">Book ${bookNum} of ${totalBooks}</div>
+                  <div class="progress mt-1" style="height: 4px">
+                    <div class="progress-bar" style="width: ${listProgressPct}%"></div>
+                  </div>
                 </div>
-                <h6 class="fw-bold mb-1 text-truncate" title="${bookName}">${bookName}</h6>
-                <div class="text-muted small">Chapter ${chapterNum} of ${totalChapters}</div>
-                <div class="progress my-2" style="height: 4px">
-                  <div class="progress-bar" style="width: ${progressPct}%"></div>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-baseline mb-1">
+                    <small class="fw-semibold text-truncate" title="${bookName}">${bookName}</small>
+                    <small class="text-muted ms-2 flex-shrink-0">
+                      <i class="bi bi-book"></i> Read ${bookCount} ${bookTimes}
+                    </small>
+                  </div>
+                  <div class="text-muted small">Chapter ${chapterNum} of ${totalChapters}</div>
+                  <div class="progress mt-1" style="height: 4px">
+                    <div class="progress-bar" style="width: ${bookProgressPct}%"></div>
+                  </div>
                 </div>
-                <small class="text-muted mt-auto">
-                  <i class="bi bi-book"></i> ${bookName} read ${bookCount} ${bookTimes}
-                </small>
               </div>
             </div>
           </div>
