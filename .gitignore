@@ -3,3 +3,4 @@
 highlights.txt
 import-highlights.mjs
 debug-highlights.mjs
+migrate-positions.mjs
