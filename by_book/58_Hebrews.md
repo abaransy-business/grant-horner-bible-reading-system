@@ -45,7 +45,7 @@
 3. For Jesus has been counted worthy of more glory than Moses — as much more glory as the builder of a house has more honor than the house itself.
 4. ( For every house is built by someone, but the builder of all things is God .)
 5. Now Moses was faithful in all God’s house as a servant, to testify to the things that were to be spoken later,
-6. but Christ is faithful over God’s house as a son. And we are his house if indeed we hold fast our confidence and our boasting in our hope.
+6. but Christ is faithful over God’s house as a son. And we are his house, if indeed we hold fast our confidence and our boasting in our hope.
 7. Therefore, as the Holy Spirit says, Today, if you hear his voice,
 8. do not harden your hearts as in the rebellion, on the day of testing in the wilderness,
 9. where your fathers put me to the test and saw my works for forty years.
@@ -341,4 +341,3 @@
 23. You should know that our brother Timothy has been released, with whom I shall see you if he comes soon.
 24. Greet all your leaders and all the saints. Those who come from Italy send you greetings.
 25. Grace be with all of you.
-
