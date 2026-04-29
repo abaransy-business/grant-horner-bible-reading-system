@@ -140,9 +140,9 @@ const applyHighlight = (container, selectedText, color, id) => {
   let n;
   while ((n = walker.nextNode())) textNodes.push(n);
 
-  // Fast path: exact single-node match
+  // Fast path: case-insensitive single-node match
   for (const node of textNodes) {
-    const idx = node.textContent.indexOf(selectedText);
+    const idx = node.textContent.toLowerCase().indexOf(selectedText.toLowerCase());
     if (idx !== -1) {
       const range = document.createRange();
       range.setStart(node, idx);
@@ -166,7 +166,7 @@ const applyHighlight = (container, selectedText, color, id) => {
     .filter((s) => s.normText.length > 0);
 
   const joined = segs.map((s) => s.normText).join(" ");
-  const matchIdx = joined.indexOf(target);
+  const matchIdx = joined.toLowerCase().indexOf(target.toLowerCase());
   if (matchIdx === -1) return;
   const matchEnd = matchIdx + target.length;
 
@@ -224,12 +224,16 @@ const applyHighlightFromRange = (container, range, color, id) => {
 let previewHighlight = null;
 
 const loadHighlights = async (chapterCode) => {
-  await new Promise((r) => setTimeout(r, 50));
+  const container = document.getElementById("chapter_content");
   try {
-    const highlights = await apiFetch(
-      `/api/highlights?chapterCode=${encodeURIComponent(getChapterKey(chapterCode))}`,
-    ).then((r) => r.json());
-    const container = document.getElementById("chapter_content");
+    const [highlights] = await Promise.all([
+      apiFetch(
+        `/api/highlights?chapterCode=${encodeURIComponent(getChapterKey(chapterCode))}`,
+      ).then((r) => r.json()),
+      new Promise((resolve) =>
+        container.addEventListener("md-render", resolve, { once: true }),
+      ),
+    ]);
     highlights.forEach((h) =>
       applyHighlight(container, h.selected_text, h.color, h.id),
     );
@@ -262,6 +266,7 @@ const initializeApp = async () => {
   const themeToggle = document.getElementById("theme_toggle");
   const chapterContent = document.getElementById("chapter_content");
   const popup = document.getElementById("highlight_popup");
+  const stickyNav = document.getElementById("sticky_nav");
 
   // --- Highlight popup setup ---
   let pendingText = null;
