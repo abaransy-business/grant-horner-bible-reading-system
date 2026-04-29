@@ -18,7 +18,9 @@
     <script src="index.js" type="module"></script>
   </head>
   <body>
-    <a href="#chapter_content" class="visually-hidden visually-hidden-focusable">Skip to reading content</a>
+    <a href="#chapter_content" class="visually-hidden visually-hidden-focusable"
+      >Skip to reading content</a
+    >
     <div class="container py-4">
       <header class="mb-3 text-center">
         <h1 class="h3 mb-3">Grant Horner's Bible-Reading System</h1>
@@ -29,9 +31,14 @@
               type="button"
               class="btn btn-outline-info btn-sm"
             >
-              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Instructions
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i
+              >Instructions
             </button>
-            <button id="resources_button" type="button" class="btn btn-outline-info btn-sm">
+            <button
+              id="resources_button"
+              type="button"
+              class="btn btn-outline-info btn-sm"
+            >
               <i class="bi bi-book me-1" aria-hidden="true"></i>Resources
             </button>
 
@@ -40,14 +47,16 @@
               type="button"
               class="btn btn-outline-primary btn-sm"
             >
-              <i class="bi bi-bar-chart-steps me-1" aria-hidden="true"></i>My Progress
+              <i class="bi bi-bar-chart-steps me-1" aria-hidden="true"></i>My
+              Progress
             </button>
             <button
               id="highlights_button"
               type="button"
               class="btn btn-outline-primary btn-sm"
             >
-              <i class="bi bi-pencil-fill me-1" aria-hidden="true"></i>Highlights
+              <i class="bi bi-pencil-fill me-1" aria-hidden="true"></i
+              >Highlights
             </button>
             <button
               id="search_button"
@@ -116,7 +125,12 @@
         </button>
       </div>
     </nav>
-    <div class="modal fade" id="settings_modal" tabindex="-1" aria-labelledby="settings_modal_title">
+    <div
+      class="modal fade"
+      id="settings_modal"
+      tabindex="-1"
+      aria-labelledby="settings_modal_title"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -158,11 +172,18 @@
       </div>
     </div>
 
-    <div class="modal fade" id="highlights_modal" tabindex="-1" aria-labelledby="highlights_modal_title">
+    <div
+      class="modal fade"
+      id="highlights_modal"
+      tabindex="-1"
+      aria-labelledby="highlights_modal_title"
+    >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title h5" id="highlights_modal_title">Highlights</h2>
+            <h2 class="modal-title h5" id="highlights_modal_title">
+              Highlights
+            </h2>
             <button
               type="button"
               class="btn-close"
@@ -184,7 +205,12 @@
       </div>
     </div>
 
-    <div class="modal fade" id="search_modal" tabindex="-1" aria-labelledby="search_modal_title">
+    <div
+      class="modal fade"
+      id="search_modal"
+      tabindex="-1"
+      aria-labelledby="search_modal_title"
+    >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
@@ -210,11 +236,18 @@
       </div>
     </div>
 
-    <div class="modal fade" id="instructions_modal" tabindex="-1" aria-labelledby="instructions_modal_title">
+    <div
+      class="modal fade"
+      id="instructions_modal"
+      tabindex="-1"
+      aria-labelledby="instructions_modal_title"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title h5" id="instructions_modal_title">Instructions</h2>
+            <h2 class="modal-title h5" id="instructions_modal_title">
+              Instructions
+            </h2>
             <button
               type="button"
               class="btn-close"
@@ -226,22 +259,42 @@
             Read 10 chapters per day — one from each of 10 lists organized by
             biblical genre: Gospels, Law, NT Letters (1 &amp; 2), Wisdom,
             Psalms, Proverbs, OT History, Prophets, and Acts. Because each list
-            has a different number of chapters, they cycle independently — the
-            combination of readings changes every day and never repeats. Use
-            "Next" to advance through your reading lists — your progress is
-            saved automatically. Select any text to highlight it in one of
-            several colors, and use "Highlights" to browse and revisit
-            everything you've marked.
+            has a different number of books, they cycle independently — the
+            combination of daily readings changes every day and never repeats.
+            <br />
+            <br />
+            Use "My Progress" to track where you are in each list, as well as
+            where you are within each book.
+            <br />
+            <br />
+            Use "Next" to advance through your reading lists — your progress is
+            saved automatically.
+            <br />
+            <br />
+            Select any text to highlight it in one of several colors, and use
+            "Highlights" to browse and revisit everything you've marked.
+            <br />
+            <br />
+            Use "Search" to search through the entire bible.
+            <br />
+            <br />
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="my_progress_modal" tabindex="-1" aria-labelledby="my_progress_modal_title">
+    <div
+      class="modal fade"
+      id="my_progress_modal"
+      tabindex="-1"
+      aria-labelledby="my_progress_modal_title"
+    >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title h5" id="my_progress_modal_title">My Progress</h2>
+            <h2 class="modal-title h5" id="my_progress_modal_title">
+              My Progress
+            </h2>
             <button
               type="button"
               class="btn-close"
@@ -254,7 +307,12 @@
       </div>
     </div>
 
-    <div class="modal fade" id="resources_modal" tabindex="-1" aria-labelledby="resources_modal_title">
+    <div
+      class="modal fade"
+      id="resources_modal"
+      tabindex="-1"
+      aria-labelledby="resources_modal_title"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -272,7 +330,9 @@
               unavailable, but more are coming soon.
             </p>
             <div class="d-flex flex-wrap gap-2">
-              <span class="badge rounded-pill text-bg-secondary opacity-75" aria-label="Genesis (coming soon)"
+              <span
+                class="badge rounded-pill text-bg-secondary opacity-75"
+                aria-label="Genesis (coming soon)"
                 >Genesis</span
               >
               <span class="badge rounded-pill text-bg-secondary opacity-75"
@@ -292,7 +352,8 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="badge rounded-pill text-bg-primary text-decoration-none"
-                >Joshua <span class="visually-hidden">(opens in new tab)</span></a
+                >Joshua
+                <span class="visually-hidden">(opens in new tab)</span></a
               >
               <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Judges</span
@@ -480,7 +541,11 @@
       </div>
     </div>
 
-    <div id="highlight_popup" role="toolbar" aria-label="Highlight colors"></div>
+    <div
+      id="highlight_popup"
+      role="toolbar"
+      aria-label="Highlight colors"
+    ></div>
 
     <div
       class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
