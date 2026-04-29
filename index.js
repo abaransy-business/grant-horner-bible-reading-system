@@ -443,7 +443,10 @@ const initializeApp = async () => {
     popup.classList.add("visible");
     positionFromAnchor();
     popupReturnFocus = document.activeElement;
-    popup.querySelector(".highlight-swatch")?.focus();
+    // On touch devices, don't steal focus — it collapses the text selection
+    if (!window.matchMedia("(pointer: coarse)").matches) {
+      popup.querySelector(".highlight-swatch")?.focus();
+    }
   };
 
   const showRemovePopup = (mark, id) => {
