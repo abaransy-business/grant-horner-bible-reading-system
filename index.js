@@ -11,13 +11,13 @@ const getChapterKey = (chapterCode) => {
 };
 
 const HIGHLIGHT_COLORS = [
-  { swatch: "#ffd60a", value: "rgba(255, 214, 10, 0.4)" },
-  { swatch: "#57cc99", value: "rgba(87, 204, 153, 0.4)" },
-  { swatch: "#74b9e8", value: "rgba(116, 185, 232, 0.4)" },
-  { swatch: "#f48fb1", value: "rgba(244, 143, 177, 0.4)" },
-  { swatch: "#ff6b6b", value: "rgba(255, 107, 107, 0.4)" },
-  { swatch: "#c084fc", value: "rgba(192, 132, 252, 0.4)" },
-  { swatch: "#fb923c", value: "rgba(251, 146, 60, 0.4)" },
+  { swatch: "#ffd60a", value: "rgba(255, 214, 10, 0.4)", name: "Yellow" },
+  { swatch: "#57cc99", value: "rgba(87, 204, 153, 0.4)", name: "Green" },
+  { swatch: "#74b9e8", value: "rgba(116, 185, 232, 0.4)", name: "Blue" },
+  { swatch: "#f48fb1", value: "rgba(244, 143, 177, 0.4)", name: "Pink" },
+  { swatch: "#ff6b6b", value: "rgba(255, 107, 107, 0.4)", name: "Red" },
+  { swatch: "#c084fc", value: "rgba(192, 132, 252, 0.4)", name: "Purple" },
+  { swatch: "#fb923c", value: "rgba(251, 146, 60, 0.4)", name: "Orange" },
 ];
 
 const findCurrentChapter = (chapterCode) => {
@@ -154,6 +154,14 @@ const countOccurrenceBefore = (container, selectedText, range) => {
   return count;
 };
 
+const makeMarkAccessible = (mark, id) => {
+  if (id !== "search-preview") {
+    mark.tabIndex = 0;
+    mark.setAttribute("role", "button");
+    mark.setAttribute("aria-label", "Highlighted text (press Enter to remove)");
+  }
+};
+
 const applyHighlight = (container, selectedText, color, id, occurrence = 0) => {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   const textNodes = [];
@@ -181,6 +189,7 @@ const applyHighlight = (container, selectedText, color, id, occurrence = 0) => {
       mark.style.backgroundColor = color;
       mark.style.color = "inherit";
       mark.dataset.highlightId = id;
+      makeMarkAccessible(mark, id);
       try {
         range.surroundContents(mark);
       } catch (e) {}
@@ -230,6 +239,7 @@ const applyHighlight = (container, selectedText, color, id, occurrence = 0) => {
         mark.style.backgroundColor = color;
         mark.style.color = "inherit";
         mark.dataset.highlightId = id;
+        makeMarkAccessible(mark, id);
         try {
           range.surroundContents(mark);
         } catch (e) {}
@@ -259,6 +269,7 @@ const applyHighlightFromRange = (container, range, color, id) => {
     mark.style.backgroundColor = color;
     mark.style.color = "inherit";
     mark.dataset.highlightId = id;
+    makeMarkAccessible(mark, id);
     try {
       r.surroundContents(mark);
     } catch (e) {}
@@ -279,7 +290,13 @@ const loadHighlights = async (chapterCode) => {
       ),
     ]);
     highlights.forEach((h) =>
-      applyHighlight(container, h.selected_text, h.color, h.id, h.occurrence ?? 0),
+      applyHighlight(
+        container,
+        h.selected_text,
+        h.color,
+        h.id,
+        h.occurrence ?? 0,
+      ),
     );
     if (previewHighlight) {
       applyHighlight(
@@ -316,14 +333,20 @@ const initializeApp = async () => {
   let pendingText = null;
   let pendingRange = null;
 
-  HIGHLIGHT_COLORS.forEach(({ swatch, value }) => {
+  HIGHLIGHT_COLORS.forEach(({ swatch, value, name }) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = "highlight-swatch";
     btn.style.backgroundColor = swatch;
+    btn.setAttribute("aria-label", `Highlight ${name}`);
     btn.addEventListener("click", async () => {
       if (!pendingText || !pendingRange) return;
       try {
-        const occurrence = countOccurrenceBefore(chapterContent, pendingText, pendingRange);
+        const occurrence = countOccurrenceBefore(
+          chapterContent,
+          pendingText,
+          pendingRange,
+        );
         const { id } = await apiFetch("/api/highlights", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -347,8 +370,10 @@ const initializeApp = async () => {
   const removeBtn = document.createElement("span");
   removeBtn.className = "highlight-remove-btn";
   removeBtn.textContent = "Remove Highlight";
+  removeBtn.setAttribute("role", "button");
+  removeBtn.tabIndex = 0;
   removeBtn.style.display = "none";
-  removeBtn.addEventListener("click", async () => {
+  const handleRemove = async () => {
     const id = removeBtn.dataset.targetId;
     if (!id) return;
     try {
@@ -363,6 +388,13 @@ const initializeApp = async () => {
       hidePopup();
     } catch (e) {
       // Toast already shown by apiFetch
+    }
+  };
+  removeBtn.addEventListener("click", handleRemove);
+  removeBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleRemove();
     }
   });
   popup.appendChild(removeBtn);
@@ -399,6 +431,8 @@ const initializeApp = async () => {
     popup.style.top = `${top}px`;
   };
 
+  let popupReturnFocus = null;
+
   const showColorPopup = (text) => {
     pendingText = text;
     [...popup.querySelectorAll(".highlight-swatch")].forEach(
@@ -408,6 +442,8 @@ const initializeApp = async () => {
     anchorRectFn = () => pendingRange.getBoundingClientRect();
     popup.classList.add("visible");
     positionFromAnchor();
+    popupReturnFocus = document.activeElement;
+    popup.querySelector(".highlight-swatch")?.focus();
   };
 
   const showRemovePopup = (mark, id) => {
@@ -420,6 +456,8 @@ const initializeApp = async () => {
     anchorRectFn = () => mark.getBoundingClientRect();
     popup.classList.add("visible");
     positionFromAnchor();
+    popupReturnFocus = document.activeElement;
+    removeBtn.focus();
   };
 
   const hidePopup = () => {
@@ -427,7 +465,19 @@ const initializeApp = async () => {
     pendingText = null;
     pendingRange = null;
     anchorRectFn = null;
+    if (popupReturnFocus) {
+      popupReturnFocus.focus();
+      popupReturnFocus = null;
+    }
   };
+
+  // Close popup on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && popup.classList.contains("visible")) {
+      e.stopPropagation();
+      hidePopup();
+    }
+  });
 
   // Show color popup on text selection (mouseup for desktop, selectionchange for iOS)
   const tryShowSelectionPopup = () => {
@@ -458,12 +508,23 @@ const initializeApp = async () => {
     selectionChangeTimer = setTimeout(tryShowSelectionPopup, 300);
   });
 
-  // Show remove popup on mark click (skip transient search preview marks)
-  chapterContent.addEventListener("click", (e) => {
-    const mark = e.target.closest("mark[data-highlight-id]");
+  // Show remove popup on mark click or Enter/Space (skip transient search preview marks)
+  const handleMarkActivate = (mark) => {
     if (!mark) return;
     if (mark.dataset.highlightId === "search-preview") return;
     showRemovePopup(mark, mark.dataset.highlightId);
+  };
+  chapterContent.addEventListener("click", (e) => {
+    handleMarkActivate(e.target.closest("mark[data-highlight-id]"));
+  });
+  chapterContent.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      const mark = e.target.closest("mark[data-highlight-id]");
+      if (mark) {
+        e.preventDefault();
+        handleMarkActivate(mark);
+      }
+    }
   });
 
   // Hide popup on mousedown outside
@@ -714,8 +775,8 @@ const initializeApp = async () => {
     }
 
     for (const [bookName, items] of Object.entries(groups)) {
-      const header = document.createElement("h6");
-      header.className = "fw-bold mt-3 mb-2";
+      const header = document.createElement("h3");
+      header.className = "h6 fw-bold mt-3 mb-2";
       header.textContent = bookName;
       highlightsList.appendChild(header);
 
@@ -723,9 +784,16 @@ const initializeApp = async () => {
         const row = document.createElement("div");
         row.className =
           "d-flex align-items-center gap-2 py-2 px-2 rounded mb-1 highlight-list-item";
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute(
+          "aria-label",
+          `${h.selected_text}, Chapter ${h._chapterNum}`,
+        );
 
         const dot = document.createElement("span");
         dot.className = "flex-shrink-0";
+        dot.setAttribute("aria-hidden", "true");
         dot.style.cssText = `width:12px;height:12px;border-radius:50%;background:${getSwatchColor(h.color)};display:inline-block`;
 
         const text = document.createElement("span");
@@ -740,7 +808,7 @@ const initializeApp = async () => {
         row.appendChild(text);
         row.appendChild(chapterLabel);
 
-        row.addEventListener("click", () => {
+        const openHighlight = () => {
           const parts = currentChapterCode.split("-");
           const [listIdx, bookmark] = h.chapter_code.split("-");
           parts[0] = listIdx;
@@ -748,6 +816,13 @@ const initializeApp = async () => {
           highlightsModal.hide();
           previewHighlight = null;
           enterPreview(parts.join("-"), h.id, "You're previewing a highlight.");
+        };
+        row.addEventListener("click", openHighlight);
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openHighlight();
+          }
         });
 
         highlightsList.appendChild(row);
@@ -755,6 +830,11 @@ const initializeApp = async () => {
     }
   };
 
+  document
+    .getElementById("highlights_modal")
+    .addEventListener("shown.bs.modal", () => {
+      highlightsSearch.focus();
+    });
   highlightsButton.addEventListener("click", async () => {
     highlightsList.innerHTML = '<p class="text-muted">Loading...</p>';
     highlightsSearch.value = "";
@@ -901,8 +981,8 @@ const initializeApp = async () => {
     }
 
     for (const [bookName, items] of Object.entries(groups)) {
-      const header = document.createElement("h6");
-      header.className = "fw-bold mt-3 mb-2";
+      const header = document.createElement("h3");
+      header.className = "h6 fw-bold mt-3 mb-2";
       header.textContent = bookName;
       searchList.appendChild(header);
 
@@ -910,6 +990,12 @@ const initializeApp = async () => {
         const row = document.createElement("div");
         row.className =
           "d-flex align-items-start gap-2 py-2 px-2 rounded mb-1 highlight-list-item";
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute(
+          "aria-label",
+          `${m.line}, Chapter ${m.chapter.chapterNum}`,
+        );
 
         const text = document.createElement("span");
         text.className = "flex-grow-1";
@@ -922,7 +1008,7 @@ const initializeApp = async () => {
         row.appendChild(text);
         row.appendChild(chapterLabel);
 
-        row.addEventListener("click", () => {
+        const openResult = () => {
           const parts = currentChapterCode.split("-");
           const ch = m.chapter;
           parts[0] = String(ch.listIndex);
@@ -939,6 +1025,13 @@ const initializeApp = async () => {
             previewId,
             "You're previewing a search result.",
           );
+        };
+        row.addEventListener("click", openResult);
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openResult();
+          }
         });
 
         searchList.appendChild(row);
@@ -952,6 +1045,11 @@ const initializeApp = async () => {
     }
   };
 
+  document
+    .getElementById("search_modal")
+    .addEventListener("shown.bs.modal", () => {
+      searchInput.focus();
+    });
   searchButton.addEventListener("click", () => {
     searchInput.value = "";
     searchList.innerHTML = `<p class="text-muted">Type at least ${SEARCH_MIN_CHARS} characters to search.</p>`;
@@ -985,6 +1083,7 @@ const initializeApp = async () => {
 
   const applyFontSize = (size) => {
     fontSizeSlider.value = size;
+    fontSizeSlider.setAttribute("aria-valuetext", `${size} pixels`);
     fontSizeValue.textContent = size;
     chapterContent.style.fontSize = `${size}px`;
   };
@@ -1009,16 +1108,18 @@ const initializeApp = async () => {
     themeToggle.checked = theme === "dark";
   };
 
-  themeToggle.addEventListener("change", () => {
+  themeToggle.addEventListener("change", async () => {
     const newTheme = themeToggle.checked ? "dark" : "light";
-    applyTheme(newTheme);
-    apiFetch("/api/theme", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ theme: newTheme }),
-    }).catch(() => {
+    try {
+      await apiFetch("/api/theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: newTheme }),
+      });
+      applyTheme(newTheme);
+    } catch (err) {
       // Toast already shown by apiFetch
-    });
+    }
   });
 
   try {

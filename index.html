@@ -18,6 +18,7 @@
     <script src="index.js" type="module"></script>
   </head>
   <body>
+    <a href="#chapter_content" class="visually-hidden visually-hidden-focusable">Skip to reading content</a>
     <div class="container py-4">
       <header class="mb-3 text-center">
         <h1 class="h3 mb-3">Grant Horner's Bible-Reading System</h1>
@@ -25,38 +26,43 @@
           <div class="d-flex gap-2 justify-content-center flex-wrap">
             <button
               id="instructions_button"
+              type="button"
               class="btn btn-outline-info btn-sm"
             >
-              <i class="bi bi-info-circle me-1"></i>Instructions
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Instructions
             </button>
-            <button id="resources_button" class="btn btn-outline-info btn-sm">
-              <i class="bi bi-book me-1"></i>Resources
+            <button id="resources_button" type="button" class="btn btn-outline-info btn-sm">
+              <i class="bi bi-book me-1" aria-hidden="true"></i>Resources
             </button>
 
             <button
               id="my_progress_button"
+              type="button"
               class="btn btn-outline-primary btn-sm"
             >
-              <i class="bi bi-bar-chart-steps me-1"></i>My Progress
+              <i class="bi bi-bar-chart-steps me-1" aria-hidden="true"></i>My Progress
             </button>
             <button
               id="highlights_button"
+              type="button"
               class="btn btn-outline-primary btn-sm"
             >
-              <i class="bi bi-pencil-fill me-1"></i>Highlights
+              <i class="bi bi-pencil-fill me-1" aria-hidden="true"></i>Highlights
             </button>
             <button
               id="search_button"
+              type="button"
               class="btn btn-outline-primary btn-sm"
             >
-              <i class="bi bi-search me-1"></i>Search
+              <i class="bi bi-search me-1" aria-hidden="true"></i>Search
             </button>
 
             <button
               id="settings_button"
+              type="button"
               class="btn btn-outline-secondary btn-sm"
             >
-              <i class="bi bi-gear me-1"></i>Settings
+              <i class="bi bi-gear me-1" aria-hidden="true"></i>Settings
             </button>
           </div>
         </nav>
@@ -66,7 +72,9 @@
         <div
           class="bible-content-container p-3 mb-4 bg-body border rounded shadow-sm"
         >
-          <md-block id="chapter_content"></md-block>
+          <article aria-label="Current chapter" aria-live="polite">
+            <md-block id="chapter_content" tabindex="-1"></md-block>
+          </article>
         </div>
       </main>
     </div>
@@ -96,6 +104,8 @@
         id="nav_preview"
         class="d-flex align-items-center justify-content-between px-4 py-3 text-bg-warning"
         style="display: none !important"
+        role="status"
+        aria-live="polite"
       >
         <span id="nav_preview_message">You're previewing a highlight.</span>
         <button
@@ -106,15 +116,16 @@
         </button>
       </div>
     </nav>
-    <div class="modal fade" id="settings_modal" tabindex="-1">
+    <div class="modal fade" id="settings_modal" tabindex="-1" aria-labelledby="settings_modal_title">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Settings</h5>
+            <h2 class="modal-title h5" id="settings_modal_title">Settings</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
@@ -147,15 +158,16 @@
       </div>
     </div>
 
-    <div class="modal fade" id="highlights_modal" tabindex="-1">
+    <div class="modal fade" id="highlights_modal" tabindex="-1" aria-labelledby="highlights_modal_title">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Highlights</h5>
+            <h2 class="modal-title h5" id="highlights_modal_title">Highlights</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
@@ -164,22 +176,24 @@
               id="highlights_search"
               class="form-control mb-3"
               placeholder="Search highlights..."
+              aria-label="Search highlights"
             />
-            <div id="highlights_list"></div>
+            <div id="highlights_list" aria-live="polite"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="search_modal" tabindex="-1">
+    <div class="modal fade" id="search_modal" tabindex="-1" aria-labelledby="search_modal_title">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Search</h5>
+            <h2 class="modal-title h5" id="search_modal_title">Search</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
@@ -188,22 +202,24 @@
               id="search_input"
               class="form-control mb-3"
               placeholder="Search the Bible..."
+              aria-label="Search the Bible"
             />
-            <div id="search_list"></div>
+            <div id="search_list" aria-live="polite"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="instructions_modal" tabindex="-1">
+    <div class="modal fade" id="instructions_modal" tabindex="-1" aria-labelledby="instructions_modal_title">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Instructions</h5>
+            <h2 class="modal-title h5" id="instructions_modal_title">Instructions</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
@@ -221,15 +237,16 @@
       </div>
     </div>
 
-    <div class="modal fade" id="my_progress_modal" tabindex="-1">
+    <div class="modal fade" id="my_progress_modal" tabindex="-1" aria-labelledby="my_progress_modal_title">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">My Progress</h5>
+            <h2 class="modal-title h5" id="my_progress_modal_title">My Progress</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body" id="my_progress_body"></div>
@@ -237,15 +254,16 @@
       </div>
     </div>
 
-    <div class="modal fade" id="resources_modal" tabindex="-1">
+    <div class="modal fade" id="resources_modal" tabindex="-1" aria-labelledby="resources_modal_title">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Resources</h5>
+            <h2 class="modal-title h5" id="resources_modal_title">Resources</h2>
             <button
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              aria-label="Close"
             ></button>
           </div>
           <div class="modal-body">
@@ -254,205 +272,206 @@
               unavailable, but more are coming soon.
             </p>
             <div class="d-flex flex-wrap gap-2">
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75" aria-label="Genesis (coming soon)"
                 >Genesis</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Exodus</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Leviticus</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Numbers</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Deuteronomy</span
               >
               <a
                 href="https://github.com/abaransy-business/grant-horner-bible-reading-system/tree/main/resources/joshua"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="badge rounded-pill text-bg-primary text-decoration-none"
-                >Joshua</a
+                >Joshua <span class="visually-hidden">(opens in new tab)</span></a
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Judges</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Ruth</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Samuel</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Samuel</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Kings</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Kings</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Chronicles</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Chronicles</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Ezra</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Nehemiah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Esther</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Job</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Psalms</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Proverbs</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Ecclesiastes</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Song of Solomon</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Isaiah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Jeremiah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Lamentations</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Ezekiel</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Daniel</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Hosea</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Joel</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Amos</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Obadiah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Jonah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Micah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Nahum</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Habakkuk</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Zephaniah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Haggai</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Zechariah</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Malachi</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Matthew</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Mark</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Luke</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >John</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Acts</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Romans</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Corinthians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Corinthians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Galatians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Ephesians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Philippians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Colossians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Thessalonians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Thessalonians</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Timothy</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Timothy</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Titus</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Philemon</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Hebrews</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >James</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 Peter</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 Peter</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >1 John</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >2 John</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >3 John</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Jude</span
               >
-              <span class="badge rounded-pill text-bg-secondary opacity-50"
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
                 >Revelation</span
               >
             </div>
@@ -461,7 +480,7 @@
       </div>
     </div>
 
-    <div id="highlight_popup"></div>
+    <div id="highlight_popup" role="toolbar" aria-label="Highlight colors"></div>
 
     <div
       class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"

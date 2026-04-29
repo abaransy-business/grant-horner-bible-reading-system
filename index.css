@@ -99,9 +99,12 @@ body {
   transition: transform 0.1s;
 }
 
-.highlight-swatch:hover {
+.highlight-swatch:hover,
+.highlight-swatch:focus-visible {
   transform: scale(1.2);
   border-color: var(--bs-secondary-color);
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 
 .highlight-remove-btn {
@@ -127,6 +130,11 @@ mark[data-highlight-id] {
   vertical-align: baseline;
 }
 
+mark[data-highlight-id]:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 1px;
+}
+
 mark[data-highlight-id="search-preview"] {
   cursor: default;
 }
@@ -136,6 +144,14 @@ mark[data-highlight-id="search-preview"] {
   transition: background 0.15s;
 }
 
-.highlight-list-item:hover {
+.highlight-list-item:hover,
+.highlight-list-item:focus-visible {
   background: var(--bs-secondary-bg);
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.highlight-remove-btn:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
