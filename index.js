@@ -134,16 +134,46 @@ const mapNormToOrig = (origText, normOff) => {
   return end;
 };
 
-const applyHighlight = (container, selectedText, color, id) => {
+const countOccurrenceBefore = (container, selectedText, range) => {
+  const textLower = selectedText.toLowerCase();
+  const fullText = container.textContent.toLowerCase();
+  const rangeOffset = (() => {
+    const pre = document.createRange();
+    pre.setStart(container, 0);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString().length;
+  })();
+  let count = 0;
+  let i = 0;
+  while (i < rangeOffset) {
+    const found = fullText.indexOf(textLower, i);
+    if (found === -1 || found >= rangeOffset) break;
+    count++;
+    i = found + 1;
+  }
+  return count;
+};
+
+const applyHighlight = (container, selectedText, color, id, occurrence = 0) => {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   const textNodes = [];
   let n;
   while ((n = walker.nextNode())) textNodes.push(n);
 
   // Fast path: case-insensitive single-node match
+  let skipped = 0;
   for (const node of textNodes) {
-    const idx = node.textContent.toLowerCase().indexOf(selectedText.toLowerCase());
-    if (idx !== -1) {
+    const lower = node.textContent.toLowerCase();
+    const selLower = selectedText.toLowerCase();
+    let searchFrom = 0;
+    while (true) {
+      const idx = lower.indexOf(selLower, searchFrom);
+      if (idx === -1) break;
+      if (skipped < occurrence) {
+        skipped++;
+        searchFrom = idx + 1;
+        continue;
+      }
       const range = document.createRange();
       range.setStart(node, idx);
       range.setEnd(node, idx + selectedText.length);
@@ -166,8 +196,22 @@ const applyHighlight = (container, selectedText, color, id) => {
     .filter((s) => s.normText.length > 0);
 
   const joined = segs.map((s) => s.normText).join(" ");
-  const matchIdx = joined.toLowerCase().indexOf(target.toLowerCase());
-  if (matchIdx === -1) return;
+  const joinedLower = joined.toLowerCase();
+  const targetLower = target.toLowerCase();
+  let matchIdx = -1;
+  let multiSkipped = 0;
+  let searchFrom = 0;
+  while (true) {
+    const found = joinedLower.indexOf(targetLower, searchFrom);
+    if (found === -1) return;
+    if (multiSkipped < occurrence - skipped) {
+      multiSkipped++;
+      searchFrom = found + 1;
+      continue;
+    }
+    matchIdx = found;
+    break;
+  }
   const matchEnd = matchIdx + target.length;
 
   let pos = 0;
@@ -235,7 +279,7 @@ const loadHighlights = async (chapterCode) => {
       ),
     ]);
     highlights.forEach((h) =>
-      applyHighlight(container, h.selected_text, h.color, h.id),
+      applyHighlight(container, h.selected_text, h.color, h.id, h.occurrence ?? 0),
     );
     if (previewHighlight) {
       applyHighlight(
@@ -279,6 +323,7 @@ const initializeApp = async () => {
     btn.addEventListener("click", async () => {
       if (!pendingText || !pendingRange) return;
       try {
+        const occurrence = countOccurrenceBefore(chapterContent, pendingText, pendingRange);
         const { id } = await apiFetch("/api/highlights", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -286,6 +331,7 @@ const initializeApp = async () => {
             chapterCode: getChapterKey(displayedChapterCode),
             selectedText: pendingText,
             color: value,
+            occurrence,
           }),
         }).then((r) => r.json());
         applyHighlightFromRange(chapterContent, pendingRange, value, id);
@@ -879,7 +925,7 @@ const initializeApp = async () => {
           searchModal.hide();
           const previewId = "search-preview";
           previewHighlight = {
-            selected_text: searchInput.value.trim(),
+            selected_text: m.line.replace(/^\d+\.\s*/, ""),
             color: HIGHLIGHT_COLORS[0].value,
             id: previewId,
           };

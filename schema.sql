@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS highlights (
   color         TEXT NOT NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE highlights ADD COLUMN IF NOT EXISTS occurrence INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS list_completions (
   id         SERIAL PRIMARY KEY,

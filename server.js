@@ -191,7 +191,7 @@ app.post(
 app.get("/api/highlights/all", requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, chapter_code, selected_text, color FROM highlights WHERE user_id = $1 ORDER BY chapter_code, created_at",
+      "SELECT id, chapter_code, selected_text, color, occurrence FROM highlights WHERE user_id = $1 ORDER BY chapter_code, created_at",
       [req.user.id],
     );
     res.json(rows);
@@ -203,7 +203,7 @@ app.get("/api/highlights/all", requireAuth, async (req, res, next) => {
 app.get("/api/highlights", requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, selected_text, color FROM highlights WHERE user_id = $1 AND chapter_code = $2",
+      "SELECT id, selected_text, color, occurrence FROM highlights WHERE user_id = $1 AND chapter_code = $2",
       [req.user.id, req.query.chapterCode],
     );
     res.json(rows);
@@ -218,10 +218,10 @@ app.post(
   express.json(),
   async (req, res, next) => {
     try {
-      const { chapterCode, selectedText, color } = req.body;
+      const { chapterCode, selectedText, color, occurrence } = req.body;
       const { rows } = await pool.query(
-        "INSERT INTO highlights (user_id, chapter_code, selected_text, color) VALUES ($1, $2, $3, $4) RETURNING id",
-        [req.user.id, chapterCode, selectedText, color],
+        "INSERT INTO highlights (user_id, chapter_code, selected_text, color, occurrence) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [req.user.id, chapterCode, selectedText, color, occurrence ?? 0],
       );
       res.json({ id: rows[0].id });
     } catch (err) {
