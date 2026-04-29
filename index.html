@@ -45,6 +45,12 @@
             >
               <i class="bi bi-pencil-fill me-1"></i>Highlights
             </button>
+            <button
+              id="search_button"
+              class="btn btn-outline-primary btn-sm"
+            >
+              <i class="bi bi-search me-1"></i>Search
+            </button>
 
             <button
               id="settings_button"
@@ -58,20 +64,6 @@
 
       <main>
         <div
-          id="preview_banner"
-          class="alert alert-warning d-flex align-items-center justify-content-between py-2 px-3 mb-3"
-          style="display: none !important"
-        >
-          <span>You're previewing a highlight.</span>
-          <button
-            id="resume_reading_banner_button"
-            class="btn btn-warning btn-sm ms-3 flex-shrink-0"
-          >
-            Resume Reading
-          </button>
-        </div>
-
-        <div
           class="bible-content-container p-3 mb-4 bg-body border rounded shadow-sm"
         >
           <md-block id="chapter_content"></md-block>
@@ -79,25 +71,40 @@
       </main>
     </div>
 
-    <nav
-      id="sticky_nav"
-      class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-body"
-    >
-      <button
-        id="previous_chapter_button"
-        class="btn btn-secondary btn-lg px-4"
-        type="button"
-        disabled
+    <nav id="sticky_nav" class="border-top">
+      <div
+        id="nav_reading"
+        class="d-flex justify-content-between align-items-center px-4 py-3 bg-body"
       >
-        Previous
-      </button>
-      <button
-        id="next_chapter_button"
-        class="btn btn-primary btn-lg px-4"
-        type="button"
+        <button
+          id="previous_chapter_button"
+          class="btn btn-secondary btn-md px-4"
+          type="button"
+          disabled
+        >
+          Previous
+        </button>
+        <button
+          id="next_chapter_button"
+          class="btn btn-primary btn-md px-4"
+          type="button"
+        >
+          Next
+        </button>
+      </div>
+      <div
+        id="nav_preview"
+        class="d-flex align-items-center justify-content-between px-4 py-3 text-bg-warning"
+        style="display: none !important"
       >
-        Next
-      </button>
+        <span id="nav_preview_message">You're previewing a highlight.</span>
+        <button
+          id="resume_reading_banner_button"
+          class="btn btn-dark btn-sm ms-3 flex-shrink-0"
+        >
+          Resume Reading
+        </button>
+      </div>
     </nav>
     <div class="modal fade" id="settings_modal" tabindex="-1">
       <div class="modal-dialog">
@@ -159,6 +166,30 @@
               placeholder="Search highlights..."
             />
             <div id="highlights_list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="search_modal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Search</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input
+              type="text"
+              id="search_input"
+              class="form-control mb-3"
+              placeholder="Search the Bible..."
+            />
+            <div id="search_list"></div>
           </div>
         </div>
       </div>

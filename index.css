@@ -127,6 +127,10 @@ mark[data-highlight-id] {
   vertical-align: baseline;
 }
 
+mark[data-highlight-id="search-preview"] {
+  cursor: default;
+}
+
 .highlight-list-item {
   cursor: pointer;
   transition: background 0.15s;

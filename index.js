@@ -221,6 +221,8 @@ const applyHighlightFromRange = (container, range, color, id) => {
   }
 };
 
+let previewHighlight = null;
+
 const loadHighlights = async (chapterCode) => {
   await new Promise((r) => setTimeout(r, 50));
   try {
@@ -231,6 +233,14 @@ const loadHighlights = async (chapterCode) => {
     highlights.forEach((h) =>
       applyHighlight(container, h.selected_text, h.color, h.id),
     );
+    if (previewHighlight) {
+      applyHighlight(
+        container,
+        previewHighlight.selected_text,
+        previewHighlight.color,
+        previewHighlight.id,
+      );
+    }
   } catch (e) {
     // Toast already shown by apiFetch
   }
@@ -244,6 +254,7 @@ const initializeApp = async () => {
   const instructionsButton = document.getElementById("instructions_button");
   const myProgressButton = document.getElementById("my_progress_button");
   const highlightsButton = document.getElementById("highlights_button");
+  const searchButton = document.getElementById("search_button");
   const settingsButton = document.getElementById("settings_button");
   const resourcesButton = document.getElementById("resources_button");
   const goToResourceButton = document.getElementById("go_to_resource_button");
@@ -396,10 +407,11 @@ const initializeApp = async () => {
     selectionChangeTimer = setTimeout(tryShowSelectionPopup, 300);
   });
 
-  // Show remove popup on mark click
+  // Show remove popup on mark click (skip transient search preview marks)
   chapterContent.addEventListener("click", (e) => {
     const mark = e.target.closest("mark[data-highlight-id]");
     if (!mark) return;
+    if (mark.dataset.highlightId === "search-preview") return;
     showRemovePopup(mark, mark.dataset.highlightId);
   });
 
@@ -421,14 +433,19 @@ const initializeApp = async () => {
     return loadHighlights(chapterCode);
   };
 
-  const previewBanner = document.getElementById("preview_banner");
+  const navReading = document.getElementById("nav_reading");
+  const navPreview = document.getElementById("nav_preview");
+  const navPreviewMessage = document.getElementById("nav_preview_message");
 
-  const stickyNav = document.getElementById("sticky_nav");
-
-  const enterPreview = async (previewCode, scrollToId) => {
+  const enterPreview = async (
+    previewCode,
+    scrollToId,
+    message = "You're previewing a highlight.",
+  ) => {
+    navPreviewMessage.textContent = message;
     await setCurrentChapter(previewCode);
-    stickyNav.style.display = "none";
-    previewBanner.style.setProperty("display", "flex", "important");
+    navReading.style.setProperty("display", "none", "important");
+    navPreview.style.setProperty("display", "flex", "important");
     if (scrollToId) {
       const mark = chapterContent.querySelector(
         `mark[data-highlight-id="${scrollToId}"]`,
@@ -438,10 +455,11 @@ const initializeApp = async () => {
   };
 
   const exitPreview = () => {
+    previewHighlight = null;
     setCurrentChapter(currentChapterCode);
-    stickyNav.style.display = "";
+    navReading.style.setProperty("display", "flex", "important");
+    navPreview.style.setProperty("display", "none", "important");
     previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
-    previewBanner.style.setProperty("display", "none", "important");
   };
 
   document
@@ -677,7 +695,8 @@ const initializeApp = async () => {
           parts[0] = listIdx;
           parts[Number(listIdx) + 1] = bookmark;
           highlightsModal.hide();
-          enterPreview(parts.join("-"), h.id);
+          previewHighlight = null;
+          enterPreview(parts.join("-"), h.id, "You're previewing a highlight.");
         });
 
         highlightsList.appendChild(row);
@@ -714,6 +733,176 @@ const initializeApp = async () => {
   highlightsSearch.addEventListener("input", () =>
     renderHighlights(highlightsSearch.value),
   );
+
+  // === Search ===
+
+  const searchModal = new bootstrap.Modal(
+    document.getElementById("search_modal"),
+  );
+  const searchInput = document.getElementById("search_input");
+  const searchList = document.getElementById("search_list");
+
+  const SEARCH_MIN_CHARS = 2;
+
+  let searchIndex = null;
+  const buildSearchIndex = () => {
+    if (searchIndex) return searchIndex;
+    searchIndex = [];
+    for (let l = 0; l < fullLists.length; l++) {
+      for (let b = 0; b < fullLists[l].length; b++) {
+        for (let c = 0; c < fullLists[l][b].length; c++) {
+          const content = fullLists[l][b][c];
+          const info = getChapterInfo(`${l}-${b}_${c}`);
+          if (!info) continue;
+          searchIndex.push({
+            listIndex: l,
+            bookIndex: b,
+            chapterIndex: c,
+            bookName: info.bookName,
+            chapterNum: info.chapterNum,
+            content,
+            contentLower: content.toLowerCase(),
+          });
+        }
+      }
+    }
+    return searchIndex;
+  };
+
+  const escapeHtml = (s) =>
+    s.replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+
+  const highlightQueryInText = (text, query) => {
+    if (!query) return escapeHtml(text);
+    const lower = text.toLowerCase();
+    const q = query.toLowerCase();
+    let result = "";
+    let i = 0;
+    while (i < text.length) {
+      const found = lower.indexOf(q, i);
+      if (found === -1) {
+        result += escapeHtml(text.slice(i));
+        break;
+      }
+      result += escapeHtml(text.slice(i, found));
+      result += `<mark class="bg-warning bg-opacity-25 text-body p-0">${escapeHtml(
+        text.slice(found, found + query.length),
+      )}</mark>`;
+      i = found + query.length;
+    }
+    return result;
+  };
+
+  const renderSearchResults = (query) => {
+    searchList.innerHTML = "";
+    const trimmed = query.trim();
+    if (trimmed.length < SEARCH_MIN_CHARS) {
+      searchList.innerHTML = `<p class="text-muted">Type at least ${SEARCH_MIN_CHARS} characters to search.</p>`;
+      return;
+    }
+    const index = buildSearchIndex();
+    const q = trimmed.toLowerCase();
+
+    const matches = [];
+    let truncated = false;
+    outer: for (const ch of index) {
+      if (ch.contentLower.indexOf(q) === -1) continue;
+      const lines = ch.content.split("\n");
+      for (const line of lines) {
+        if (!line.trim() || line.startsWith("#")) continue;
+        if (line.toLowerCase().includes(q)) {
+          matches.push({ chapter: ch, line: line.trim() });
+        }
+      }
+    }
+
+    if (matches.length === 0) {
+      searchList.innerHTML = `<p class="text-muted">No results found.</p>`;
+      return;
+    }
+
+    matches.sort(
+      (a, b) =>
+        a.chapter.bookName.localeCompare(b.chapter.bookName) ||
+        a.chapter.chapterNum - b.chapter.chapterNum,
+    );
+
+    const groups = {};
+    for (const m of matches) {
+      const key = m.chapter.bookName;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(m);
+    }
+
+    for (const [bookName, items] of Object.entries(groups)) {
+      const header = document.createElement("h6");
+      header.className = "fw-bold mt-3 mb-2";
+      header.textContent = bookName;
+      searchList.appendChild(header);
+
+      for (const m of items) {
+        const row = document.createElement("div");
+        row.className =
+          "d-flex align-items-start gap-2 py-2 px-2 rounded mb-1 highlight-list-item";
+
+        const text = document.createElement("span");
+        text.className = "flex-grow-1";
+        text.innerHTML = highlightQueryInText(m.line, trimmed);
+
+        const chapterLabel = document.createElement("small");
+        chapterLabel.className = "text-muted flex-shrink-0";
+        chapterLabel.textContent = `Ch. ${m.chapter.chapterNum}`;
+
+        row.appendChild(text);
+        row.appendChild(chapterLabel);
+
+        row.addEventListener("click", () => {
+          const parts = currentChapterCode.split("-");
+          const ch = m.chapter;
+          parts[0] = String(ch.listIndex);
+          parts[ch.listIndex + 1] = `${ch.bookIndex}_${ch.chapterIndex}`;
+          searchModal.hide();
+          const previewId = "search-preview";
+          previewHighlight = {
+            selected_text: searchInput.value.trim(),
+            color: HIGHLIGHT_COLORS[0].value,
+            id: previewId,
+          };
+          enterPreview(
+            parts.join("-"),
+            previewId,
+            "You're previewing a search result.",
+          );
+        });
+
+        searchList.appendChild(row);
+      }
+    }
+  };
+
+  searchButton.addEventListener("click", () => {
+    searchInput.value = "";
+    searchList.innerHTML = `<p class="text-muted">Type at least ${SEARCH_MIN_CHARS} characters to search.</p>`;
+    searchModal.show();
+  });
+
+  let searchDebounceTimer = null;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      renderSearchResults(searchInput.value);
+    }, 250);
+  });
 
   const instructionsModal = new bootstrap.Modal(
     document.getElementById("instructions_modal"),
