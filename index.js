@@ -864,6 +864,7 @@ const initializeApp = async () => {
     const index = buildSearchIndex();
     const q = trimmed.toLowerCase();
 
+    const SEARCH_MAX_RESULTS = 500;
     const matches = [];
     let truncated = false;
     outer: for (const ch of index) {
@@ -873,6 +874,10 @@ const initializeApp = async () => {
         if (!line.trim() || line.startsWith("#")) continue;
         if (line.toLowerCase().includes(q)) {
           matches.push({ chapter: ch, line: line.trim() });
+          if (matches.length >= SEARCH_MAX_RESULTS) {
+            truncated = true;
+            break outer;
+          }
         }
       }
     }
@@ -938,6 +943,12 @@ const initializeApp = async () => {
 
         searchList.appendChild(row);
       }
+    }
+    if (truncated) {
+      const note = document.createElement("p");
+      note.className = "text-muted mt-2";
+      note.textContent = `Showing first ${SEARCH_MAX_RESULTS} results. Refine your search for more specific matches.`;
+      searchList.appendChild(note);
     }
   };
 
