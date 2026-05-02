@@ -735,7 +735,7 @@
 15. It cannot be bought for gold, and silver cannot be weighed as its price.
 16. It cannot be valued in the gold of Ophir, in precious onyx or sapphire.
 17. Gold and glass cannot equal it, nor can it be exchanged for jewels of fine gold.
-18. No mention shall be made of coral or of crystal; the price of wisdom is above, pearls.
+18. No mention shall be made of coral or of crystal; the price of wisdom is above pearls.
 19. The topaz of Ethiopia cannot equal it, nor can it be valued in pure gold.
 20. From where, then, does wisdom come? And where is the place of understanding?
 21. It is hidden from the eyes of all living and concealed from the birds of the air.
@@ -1195,4 +1195,3 @@
 15. And in all the land there were no women so beautiful as Job’s daughters. And their father gave them an inheritance among their brothers.
 16. And after this Job lived 140 years, and saw his sons, and his sons ’ sons, four generations.
 17. And Job died, an old man, and full of days.
-
