@@ -79,7 +79,10 @@ const findPreviousChapter = (chapterCode) => {
     const lastChapterIndex = fullLists[prevListIndex][bookIndex - 1].length - 1;
     parts[prevListIndex] = `${bookIndex - 1}_${lastChapterIndex}`;
   } else {
-    parts[prevListIndex] = "0_0";
+    const finalBookIndex = fullLists[prevListIndex].length - 1;
+    const finalChapterIndex =
+      fullLists[prevListIndex][finalBookIndex].length - 1;
+    parts[prevListIndex] = `${finalBookIndex}_${finalChapterIndex}`;
   }
 
   const newChapterCode = `${prevListIndex}-${parts.join("-")}`;
