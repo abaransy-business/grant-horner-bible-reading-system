@@ -472,7 +472,7 @@ const initializeApp = async () => {
     pendingRange = null;
     anchorRectFn = null;
     if (popupReturnFocus) {
-      popupReturnFocus.focus();
+      popupReturnFocus.focus({ preventScroll: true });
       popupReturnFocus = null;
     }
   };
