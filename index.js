@@ -1059,6 +1059,11 @@ const initializeApp = async () => {
   searchButton.addEventListener("click", () => {
     searchInput.value = "";
     searchList.innerHTML = `<p class="text-muted">Type at least ${SEARCH_MIN_CHARS} characters to search.</p>`;
+    navSearchInput.value = "";
+    navSearchList.innerHTML = `<p class="text-muted">Type a book name (e.g. "Matthew") or book and chapter (e.g. "Matthew 15").</p>`;
+    bootstrap.Tab.getOrCreateInstance(
+      document.getElementById("search_tab_verses"),
+    ).show();
     searchModal.show();
   });
 
@@ -1069,6 +1074,106 @@ const initializeApp = async () => {
       renderSearchResults(searchInput.value);
     }, 250);
   });
+
+  // === Navigation search (Books tab) ===
+
+  const navSearchInput = document.getElementById("nav_search_input");
+  const navSearchList = document.getElementById("nav_search_list");
+
+  const parseNavQuery = (query) => {
+    const trimmed = query.trim();
+    if (!trimmed) return null;
+    const match = trimmed.match(/^(.*?)(?:\s+(\d+))?$/);
+    if (!match) return null;
+    const bookPart = match[1].trim();
+    const chapterPart = match[2] ? Number(match[2]) : null;
+    if (!bookPart) return null;
+    return { bookPart, chapterPart };
+  };
+
+  const renderNavSearchResults = (query) => {
+    navSearchList.innerHTML = "";
+    const parsed = parseNavQuery(query);
+    if (!parsed) {
+      navSearchList.innerHTML = `<p class="text-muted">Type a book name (e.g. "Matthew") or book and chapter (e.g. "Matthew 15").</p>`;
+      return;
+    }
+    const { bookPart, chapterPart } = parsed;
+    const bookLower = bookPart.toLowerCase();
+    const index = buildSearchIndex();
+
+    let chapters = index.filter((ch) =>
+      ch.bookName.toLowerCase().includes(bookLower),
+    );
+    if (chapterPart !== null) {
+      chapters = chapters.filter((ch) => ch.chapterNum === chapterPart);
+    }
+
+    if (chapters.length === 0) {
+      navSearchList.innerHTML = `<p class="text-muted">No matching chapters found.</p>`;
+      return;
+    }
+
+    const groups = {};
+    for (const ch of chapters) {
+      if (!groups[ch.bookName]) groups[ch.bookName] = [];
+      groups[ch.bookName].push(ch);
+    }
+
+    for (const [bookName, items] of Object.entries(groups)) {
+      const header = document.createElement("h3");
+      header.className = "h6 fw-bold mt-3 mb-2";
+      header.textContent = bookName;
+      navSearchList.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "d-flex flex-wrap gap-2";
+
+      for (const ch of items) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "btn btn-outline-secondary btn-sm";
+        card.textContent = `Ch. ${ch.chapterNum}`;
+        card.setAttribute("aria-label", `${bookName} chapter ${ch.chapterNum}`);
+        card.addEventListener("click", () => {
+          const parts = currentChapterCode.split("-");
+          parts[0] = String(ch.listIndex);
+          parts[ch.listIndex + 1] = `${ch.bookIndex}_${ch.chapterIndex}`;
+          searchModal.hide();
+          previewHighlight = null;
+          enterPreview(
+            parts.join("-"),
+            null,
+            `You're previewing ${bookName} chapter ${ch.chapterNum}.`,
+          ).then(() => {
+            chapterContent.scrollIntoView({ behavior: "instant" });
+          });
+        });
+        grid.appendChild(card);
+      }
+      navSearchList.appendChild(grid);
+    }
+  };
+
+  let navSearchDebounceTimer = null;
+  navSearchInput.addEventListener("input", () => {
+    clearTimeout(navSearchDebounceTimer);
+    navSearchDebounceTimer = setTimeout(() => {
+      renderNavSearchResults(navSearchInput.value);
+    }, 200);
+  });
+
+  // Reset nav search when search modal is shown, focus the active tab's input
+  document
+    .getElementById("search_tab_books")
+    .addEventListener("shown.bs.tab", () => {
+      navSearchInput.focus();
+    });
+  document
+    .getElementById("search_tab_verses")
+    .addEventListener("shown.bs.tab", () => {
+      searchInput.focus();
+    });
 
   const instructionsModal = new bootstrap.Modal(
     document.getElementById("instructions_modal"),
