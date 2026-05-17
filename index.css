@@ -3,12 +3,43 @@ body {
   padding-bottom: 80px;
 }
 
+#sticky_header {
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+  background-color: color-mix(in srgb, var(--bs-body-bg) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--bs-border-color);
+  transition: transform 0.25s ease;
+  will-change: transform;
+}
+
+#sticky_header.header-hidden {
+  transform: translateY(-100%);
+}
+
+#chapter_heading {
+  font-weight: 600;
+  min-width: 0;
+}
+
+/* Icon-only header actions on narrow screens */
+@media (max-width: 575.98px) {
+  .header-action .header-action-label {
+    display: none;
+  }
+}
+
 #sticky_nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 1040;
+  background-color: color-mix(in srgb, var(--bs-body-bg) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
 }
 
 .bible-content-container {

@@ -18,65 +18,93 @@
     <script src="index.js" type="module"></script>
   </head>
   <body>
-    <a href="#chapter_content" class="visually-hidden visually-hidden-focusable"
-      >Skip to reading content</a
-    >
-    <div class="container py-4">
-      <header class="mb-3 text-center">
-        <h1 class="h3 mb-3">Grant Horner's Bible-Reading System</h1>
-        <nav aria-label="Application Tools">
-          <div class="d-flex gap-2 justify-content-center flex-wrap">
-            <button
-              id="instructions_button"
-              type="button"
-              class="btn btn-outline-info btn-sm"
-            >
-              <i class="bi bi-info-circle me-1" aria-hidden="true"></i
-              >Instructions
-            </button>
-            <button
-              id="resources_button"
-              type="button"
-              class="btn btn-outline-info btn-sm"
-            >
-              <i class="bi bi-book me-1" aria-hidden="true"></i>Resources
-            </button>
-
+    <header id="sticky_header">
+      <a
+        href="#chapter_content"
+        class="visually-hidden visually-hidden-focusable"
+        >Skip to reading content</a
+      >
+      <div
+        class="container d-flex align-items-center justify-content-between gap-3 py-2"
+      >
+        <h1 class="h5 mb-0" id="chapter_heading" aria-live="polite"></h1>
+        <nav aria-label="Application Tools" class="flex-shrink-0">
+          <div class="d-flex gap-2 align-items-center">
             <button
               id="my_progress_button"
               type="button"
-              class="btn btn-outline-primary btn-sm"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="My Progress"
             >
-              <i class="bi bi-bar-chart-steps me-1" aria-hidden="true"></i>My
-              Progress
+              <i class="bi bi-bar-chart-steps" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">My Progress</span>
             </button>
             <button
               id="highlights_button"
               type="button"
-              class="btn btn-outline-primary btn-sm"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="Highlights"
             >
-              <i class="bi bi-pencil-fill me-1" aria-hidden="true"></i
-              >Highlights
+              <i class="bi bi-pencil-fill" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">Highlights</span>
             </button>
             <button
               id="search_button"
               type="button"
-              class="btn btn-outline-primary btn-sm"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="Search"
             >
-              <i class="bi bi-search me-1" aria-hidden="true"></i>Search
+              <i class="bi bi-search" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">Search</span>
             </button>
-
-            <button
-              id="settings_button"
-              type="button"
-              class="btn btn-outline-secondary btn-sm"
-            >
-              <i class="bi bi-gear me-1" aria-hidden="true"></i>Settings
-            </button>
+            <div class="dropdown">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="More options"
+              >
+                <i class="bi bi-three-dots" aria-hidden="true"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button
+                    id="instructions_button"
+                    type="button"
+                    class="dropdown-item"
+                  >
+                    <i class="bi bi-info-circle me-2" aria-hidden="true"></i
+                    >Instructions
+                  </button>
+                </li>
+                <li>
+                  <button
+                    id="resources_button"
+                    type="button"
+                    class="dropdown-item"
+                  >
+                    <i class="bi bi-book me-2" aria-hidden="true"></i>Resources
+                  </button>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <button
+                    id="settings_button"
+                    type="button"
+                    class="dropdown-item"
+                  >
+                    <i class="bi bi-gear me-2" aria-hidden="true"></i>Settings
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </nav>
-      </header>
+      </div>
+    </header>
 
+    <div class="container py-4">
       <main>
         <div
           class="bible-content-container p-3 mb-4 bg-body border rounded shadow-sm"
@@ -234,7 +262,9 @@
                   role="tab"
                   aria-controls="search_tab_verses_pane"
                   aria-selected="true"
-                >Verses</button>
+                >
+                  Verses
+                </button>
               </li>
               <li class="nav-item" role="presentation">
                 <button
@@ -246,7 +276,9 @@
                   role="tab"
                   aria-controls="search_tab_books_pane"
                   aria-selected="false"
-                >Books</button>
+                >
+                  Books
+                </button>
               </li>
             </ul>
             <div class="tab-content">

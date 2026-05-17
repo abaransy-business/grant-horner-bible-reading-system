@@ -543,11 +543,45 @@ const initializeApp = async () => {
   // Reposition popup on scroll
   document.addEventListener("scroll", positionFromAnchor, { passive: true });
 
+  // Hide sticky header on scroll-down, reveal on scroll-up
+  const stickyHeader = document.getElementById("sticky_header");
+  let lastScrollY = window.scrollY;
+  const SCROLL_DELTA = 8;
+  const REVEAL_THRESHOLD = 80;
+  document.addEventListener(
+    "scroll",
+    () => {
+      const currentY = window.scrollY;
+      const diff = currentY - lastScrollY;
+      if (Math.abs(diff) < SCROLL_DELTA) return;
+      if (currentY <= REVEAL_THRESHOLD) {
+        stickyHeader.classList.remove("header-hidden");
+      } else if (diff > 0) {
+        stickyHeader.classList.add("header-hidden");
+      } else {
+        stickyHeader.classList.remove("header-hidden");
+      }
+      lastScrollY = currentY;
+    },
+    { passive: true },
+  );
+
   let displayedChapterCode = null;
+  const chapterHeading = document.getElementById("chapter_heading");
 
   const setCurrentChapter = (chapterCode) => {
     displayedChapterCode = chapterCode;
-    chapterContent.mdContent = findCurrentChapter(chapterCode);
+    const rawContent = findCurrentChapter(chapterCode);
+    const headingMatch = rawContent.match(
+      /^#\s+(.+?)\s+-\s+Chapter\s+(\d+)\s*\n?/m,
+    );
+    if (headingMatch) {
+      chapterHeading.textContent = `${headingMatch[1]} - Chapter ${headingMatch[2]}`;
+      chapterContent.mdContent = rawContent.replace(headingMatch[0], "");
+    } else {
+      chapterHeading.textContent = "";
+      chapterContent.mdContent = rawContent;
+    }
     return loadHighlights(chapterCode);
   };
 
@@ -621,7 +655,10 @@ const initializeApp = async () => {
       });
       currentChapterCode = newChapterCode;
       setCurrentChapter(newChapterCode);
-      chapterContent.scrollIntoView({ behavior: "instant" });
+      window.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
     } catch (err) {
       // Toast already shown by apiFetch
     } finally {
@@ -642,7 +679,10 @@ const initializeApp = async () => {
       });
       currentChapterCode = newChapterCode;
       setCurrentChapter(newChapterCode);
-      chapterContent.scrollIntoView({ behavior: "instant" });
+      window.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
     } catch (err) {
       // Toast already shown by apiFetch
     } finally {
