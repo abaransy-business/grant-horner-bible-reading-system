@@ -1186,7 +1186,7 @@ const initializeApp = async () => {
             null,
             `You're previewing ${bookName} chapter ${ch.chapterNum}.`,
           ).then(() => {
-            chapterContent.scrollIntoView({ behavior: "instant" });
+            window.scrollTo({ top: 0, behavior: "instant" });
           });
         });
         grid.appendChild(card);
