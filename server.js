@@ -398,6 +398,14 @@ app.post(
   },
 );
 
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain").sendFile(join(__dirname, "robots.txt"));
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  res.type("application/xml").sendFile(join(__dirname, "sitemap.xml"));
+});
+
 app.use(express.static(__dirname, { index: false }));
 
 const PORT = process.env.PORT || 3000;
