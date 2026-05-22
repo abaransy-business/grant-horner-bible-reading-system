@@ -70,16 +70,6 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li>
                   <button
-                    id="instructions_button"
-                    type="button"
-                    class="dropdown-item"
-                  >
-                    <i class="bi bi-info-circle me-2" aria-hidden="true"></i
-                    >Instructions
-                  </button>
-                </li>
-                <li>
-                  <button
                     id="resources_button"
                     type="button"
                     class="dropdown-item"
@@ -208,10 +198,17 @@
     >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title h5" id="highlights_modal_title">
-              Highlights
-            </h2>
+          <div class="modal-header align-items-start">
+            <div class="me-auto">
+              <h2 class="modal-title h5 mb-1" id="highlights_modal_title">
+                Highlights
+              </h2>
+              <p class="text-muted small mb-0">
+                Select any verse text while reading to highlight it in a color
+                of your choice. All your highlights live here — search them,
+                revisit them, or jump back to their chapter in one tap.
+              </p>
+            </div>
             <button
               type="button"
               class="btn-close"
@@ -317,54 +314,6 @@
         </div>
       </div>
     </div>
-
-    <div
-      class="modal fade"
-      id="instructions_modal"
-      tabindex="-1"
-      aria-labelledby="instructions_modal_title"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title h5" id="instructions_modal_title">
-              Instructions
-            </h2>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            Read 10 chapters per day — one from each of 10 lists organized by
-            biblical genre: Gospels, Law, NT Letters (1 &amp; 2), Wisdom,
-            Psalms, Proverbs, OT History, Prophets, and Acts. Because each list
-            has a different number of books, they cycle independently — the
-            combination of daily readings changes every day and never repeats.
-            <br />
-            <br />
-            Use "My Progress" to track where you are in each list, as well as
-            where you are within each book.
-            <br />
-            <br />
-            Use "Next" to advance through your reading lists — your progress is
-            saved automatically.
-            <br />
-            <br />
-            Select any text to highlight it in one of several colors, and use
-            "Highlights" to browse and revisit everything you've marked.
-            <br />
-            <br />
-            Use "Search" to search through the entire Bible.
-            <br />
-            <br />
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div
       class="modal fade"
       id="my_progress_modal"
@@ -373,10 +322,16 @@
     >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title h5" id="my_progress_modal_title">
-              My Progress
-            </h2>
+          <div class="modal-header align-items-start">
+            <div class="me-auto">
+              <h2 class="modal-title h5 mb-1" id="my_progress_modal_title">
+                My Progress
+              </h2>
+              <p class="text-muted small mb-0">
+                Track where you are across all 10 reading lists. Tap a book to
+                jump straight to its current chapter.
+              </p>
+            </div>
             <button
               type="button"
               class="btn-close"

@@ -319,7 +319,6 @@ const initializeApp = async () => {
   const previousChapterButton = document.getElementById(
     "previous_chapter_button",
   );
-  const instructionsButton = document.getElementById("instructions_button");
   const myProgressButton = document.getElementById("my_progress_button");
   const highlightsButton = document.getElementById("highlights_button");
   const searchButton = document.getElementById("search_button");
@@ -1214,12 +1213,6 @@ const initializeApp = async () => {
     .addEventListener("shown.bs.tab", () => {
       searchInput.focus();
     });
-
-  const instructionsModal = new bootstrap.Modal(
-    document.getElementById("instructions_modal"),
-  );
-  instructionsButton.addEventListener("click", () => instructionsModal.show());
-
   const settingsModal = new bootstrap.Modal(
     document.getElementById("settings_modal"),
   );
