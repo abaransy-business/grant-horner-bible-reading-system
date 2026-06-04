@@ -1099,7 +1099,14 @@ const initializeApp = async () => {
       .split("\n")
       .map((line) => `> ${line}`)
       .join("\n");
-    const prompt = `Explain this text\n\n${quoted}`;
+    // Include the current book + chapter (e.g. "1 Corinthians - Chapter 12")
+    // so the model can ground the explanation in the right passage. Read it
+    // from the visible heading — it's the same source the user sees.
+    const headingEl = document.getElementById("chapter_heading");
+    const location = headingEl ? headingEl.textContent.trim() : "";
+    const prompt = location
+      ? `Explain this text from ${location}\n\n${quoted}`
+      : `Explain this text\n\n${quoted}`;
     // Render the quoted block as a "user" bubble, then send.
     renderChatMessage("user", prompt, { markdown: false });
     submitChatTurn(prompt, { displayUser: false });
