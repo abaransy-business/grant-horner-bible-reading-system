@@ -369,15 +369,29 @@ const initializeApp = async () => {
     popup.appendChild(btn);
   });
 
-  // "Explain" button — only on Mac desktop (fine pointer + Mac platform).
-  // Talks to a local Ollama server the user installed via the mac installer.
-  const isMacDesktop =
-    /Mac/i.test(navigator.platform || navigator.userAgent || "") &&
-    !/iPhone|iPad|iPod/i.test(navigator.userAgent || "") &&
-    window.matchMedia("(pointer: fine)").matches;
+  // The AI assistant talks to a local Ollama server. We currently ship
+  // installers for Mac and Windows desktops, so the feature is gated to
+  // those platforms with a fine pointer (excludes touch tablets reporting
+  // a desktop UA in some browsers).
+  const detectDesktopOS = () => {
+    const ua = navigator.userAgent || "";
+    const platform =
+      (navigator.userAgentData && navigator.userAgentData.platform) ||
+      navigator.platform ||
+      "";
+    const isFinePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!isFinePointer) return null;
+    // iPadOS reports "Mac" in platform but iPhone/iPad/iPod in the UA string.
+    if (/iPhone|iPad|iPod|Android/i.test(ua)) return null;
+    if (/Mac|Darwin/i.test(platform) || /Macintosh/i.test(ua)) return "mac";
+    if (/Win/i.test(platform) || /Windows/i.test(ua)) return "windows";
+    return null;
+  };
+  const desktopOS = detectDesktopOS(); // "mac" | "windows" | null
+  const aiAssistantSupported = desktopOS !== null;
 
   let explainBtn = null;
-  if (isMacDesktop) {
+  if (aiAssistantSupported) {
     explainBtn = document.createElement("span");
     explainBtn.className = "highlight-explain-btn";
     explainBtn.setAttribute("role", "button");
@@ -387,6 +401,11 @@ const initializeApp = async () => {
     explainBtn.style.display = "none";
     const handleExplain = () => {
       if (!pendingText) return;
+      // Don't start a new Explain turn while the previous response is still
+      // streaming. The button is visually disabled via CSS in this state,
+      // but we also bail here to defend against keyboard / programmatic
+      // activation.
+      if (chatBusy) return;
       const text = pendingText;
       window.getSelection().removeAllRanges();
       hidePopup();
@@ -589,6 +608,8 @@ const initializeApp = async () => {
   const chatForm = document.getElementById("explain_chat_form");
   const chatInput = document.getElementById("explain_chat_input");
   const chatSendBtn = document.getElementById("explain_chat_send");
+  const chatExpandBtn = document.getElementById("explain_chat_expand");
+  const chatExpandIcon = document.getElementById("explain_chat_expand_icon");
 
   const ASSISTANT_LABEL = "Assistant";
 
@@ -606,10 +627,50 @@ const initializeApp = async () => {
     "ollama_setup_install_section",
   );
   const setupRetryBtn = document.getElementById("ollama_setup_retry");
+  const setupDownloadLink = document.getElementById(
+    "ollama_setup_download_link",
+  );
+  const setupInstallHint = document.getElementById("ollama_setup_install_hint");
   let setupModal = null;
   if (setupModalEl) {
     setupModal = bootstrap.Modal.getOrCreateInstance(setupModalEl);
   }
+
+  // OS-specific strings for the setup modal. Keys map to the platforms we
+  // ship installers for. `desktopOS` decides which set is applied.
+  const SETUP_COPY = {
+    mac: {
+      downloadHref: "/downloads/ollama-mac-installer.dmg",
+      installHint:
+        "After downloading, open the file and double-click " +
+        "<code>ollama-mac-installer.command</code>. macOS may warn that it's " +
+        "from an unidentified developer — open " +
+        "<strong>System Settings → Privacy &amp; Security</strong>, " +
+        "scroll down to <strong>Security</strong> and click " +
+        "<strong>Open Anyway</strong>.",
+      offlineBody:
+        "The local AI assistant doesn't appear to be running. " +
+        "Open the <strong>Ollama</strong> app from your Applications folder " +
+        "(or press <kbd>⌘ Space</kbd> and type <em>Ollama</em>). " +
+        "This window will continue automatically as soon as it's ready.",
+    },
+    windows: {
+      downloadHref: "/downloads/ollama-windows-installer.zip",
+      installHint:
+        "After downloading, extract the ZIP and double-click " +
+        "<code>ollama-windows-installer.cmd</code>. Windows SmartScreen may " +
+        "warn that it's from an unknown publisher — click " +
+        "<strong>More info</strong>, then <strong>Run anyway</strong>.",
+      offlineBody:
+        "The local AI assistant doesn't appear to be running. " +
+        "Open <strong>Ollama</strong> from the Start menu (or look for the " +
+        "<strong>Ollama</strong> icon in the system tray, near the clock). " +
+        "This window will continue automatically as soon as it's ready.",
+    },
+  };
+  const setupCopy = SETUP_COPY[desktopOS] || SETUP_COPY.mac;
+  if (setupDownloadLink) setupDownloadLink.href = setupCopy.downloadHref;
+  if (setupInstallHint) setupInstallHint.innerHTML = setupCopy.installHint;
 
   // Result shape: { ok: true } | { ok: false, reason: "offline"|"missing-model", message }
   const checkOllamaStatus = async () => {
@@ -692,20 +753,18 @@ const initializeApp = async () => {
         if (status.reason === "missing-model") {
           setupTitleEl.innerHTML =
             '<i class="bi bi-stars me-1" aria-hidden="true"></i>Download the AI model';
+          const terminalName =
+            desktopOS === "windows" ? "PowerShell" : "Terminal";
           setupBodyEl.innerHTML =
             `The local AI assistant is running, but the <code>${OLLAMA_MODEL}</code> model hasn't been downloaded yet. ` +
-            "Re-run the installer to download it, or open Terminal and run " +
+            `Re-run the installer to download it, or open ${terminalName} and run ` +
             `<code>ollama pull ${OLLAMA_MODEL}</code>.`;
           setupWaitingEl.classList.add("d-none");
         } else {
           // offline
           setupTitleEl.innerHTML =
             '<i class="bi bi-stars me-1" aria-hidden="true"></i>Start the local AI assistant';
-          setupBodyEl.innerHTML =
-            "The local AI assistant doesn't appear to be running. " +
-            "Open the <strong>Ollama</strong> app from your Applications folder " +
-            "(or press <kbd>⌘ Space</kbd> and type <em>Ollama</em>). " +
-            "This window will continue automatically as soon as it's ready.";
+          setupBodyEl.innerHTML = setupCopy.offlineBody;
           setupWaitingEl.classList.remove("d-none");
         }
       };
@@ -892,6 +951,18 @@ const initializeApp = async () => {
     chatBusy = busy;
     chatSendBtn.disabled = busy;
     chatInput.disabled = busy;
+    // Reflect busy state on the Explain button so users can't kick off a
+    // new turn while the current one is still streaming.
+    if (explainBtn) {
+      explainBtn.classList.toggle("is-busy", busy);
+      explainBtn.setAttribute("aria-disabled", busy ? "true" : "false");
+      // Pull the button out of the tab order while busy so keyboard users
+      // don't land on a no-op control.
+      explainBtn.tabIndex = busy ? -1 : 0;
+      explainBtn.title = busy
+        ? "Waiting for the current response to finish…"
+        : "";
+    }
   };
 
   // Stream a reply from Ollama, calling onChunk(deltaText, fullText) for each token.
@@ -1039,10 +1110,62 @@ const initializeApp = async () => {
     });
   }
 
+  // --- Chat panel expand toggle ---
+  // Two widths: normal (~420px) and wide (~900px). The choice is persisted
+  // to the user's account via /api/chat-wide so it follows them across
+  // devices. The initial value arrives with the rest of the bootstrap
+  // payload (/api/chapter-code) and is applied by `setChatWideInitial`.
+  let chatWide = false;
+  const applyChatWide = (wide) => {
+    if (!chatPanelEl || !chatExpandBtn || !chatExpandIcon) return;
+    chatPanelEl.classList.toggle("is-wide", wide);
+    chatExpandBtn.setAttribute("aria-pressed", wide ? "true" : "false");
+    chatExpandBtn.setAttribute(
+      "aria-label",
+      wide ? "Shrink chat panel" : "Expand chat panel",
+    );
+    chatExpandBtn.title = wide ? "Shrink" : "Expand";
+    chatExpandIcon.classList.toggle("bi-arrows-angle-expand", !wide);
+    chatExpandIcon.classList.toggle("bi-arrows-angle-contract", wide);
+  };
+  // Called once the bootstrap fetch returns the persisted value.
+  const setChatWideInitial = (wide) => {
+    chatWide = !!wide;
+    applyChatWide(chatWide);
+  };
+  // Apply the default state up-front so the panel has the right class even
+  // before the bootstrap fetch resolves (defensive — the panel isn't visible
+  // at that point anyway).
+  applyChatWide(chatWide);
+  if (chatExpandBtn) {
+    chatExpandBtn.addEventListener("click", async () => {
+      chatWide = !chatWide;
+      applyChatWide(chatWide);
+      try {
+        await apiFetch("/api/chat-wide", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatWide }),
+        });
+      } catch {
+        // Toast already shown by apiFetch. Roll the visual back so the UI
+        // matches what's actually on the server.
+        chatWide = !chatWide;
+        applyChatWide(chatWide);
+      }
+    });
+  }
+  // One-time prune of the old localStorage key from the pre-DB version.
+  try {
+    localStorage.removeItem("explainChatWide");
+  } catch {
+    /* ignore */
+  }
+
   // Global header "Assistant" button — only on Mac desktop. Opens the chat
   // panel without a pre-filled prompt so the user can ask anything.
   const assistantButton = document.getElementById("assistant_button");
-  if (assistantButton && isMacDesktop && chatOffcanvas) {
+  if (assistantButton && aiAssistantSupported && chatOffcanvas) {
     assistantButton.hidden = false;
     assistantButton.addEventListener("click", async () => {
       const ready = await ensureOllamaReady();
@@ -1779,11 +1902,12 @@ const initializeApp = async () => {
   });
 
   try {
-    const { chapterCode, theme, fontSize } = await apiFetch(
+    const { chapterCode, theme, fontSize, chatWide } = await apiFetch(
       "/api/chapter-code",
     ).then((r) => r.json());
     applyTheme(theme);
     applyFontSize(fontSize ?? 18);
+    setChatWideInitial(chatWide ?? false);
     currentChapterCode = chapterCode;
     previousChapterButton.disabled = currentChapterCode === DEFAULT_CODE;
     setCurrentChapter(currentChapterCode);

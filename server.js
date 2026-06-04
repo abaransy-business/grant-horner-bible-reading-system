@@ -129,14 +129,15 @@ app.get("/app", requireAuth, (req, res) => {
 app.get("/api/chapter-code", requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      "SELECT chapter_code, theme, font_size FROM users WHERE id = $1",
+      "SELECT chapter_code, theme, font_size, chat_wide FROM users WHERE id = $1",
       [req.user.id],
     );
     const chapterCode =
       rows[0]?.chapter_code ?? "0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0-0_0";
     const theme = rows[0]?.theme ?? "dark";
     const fontSize = rows[0]?.font_size ?? 18;
-    res.json({ chapterCode, theme, fontSize });
+    const chatWide = rows[0]?.chat_wide ?? false;
+    res.json({ chapterCode, theme, fontSize, chatWide });
   } catch (err) {
     next(err);
   }
@@ -162,6 +163,26 @@ app.post(
     try {
       await pool.query("UPDATE users SET font_size = $1 WHERE id = $2", [
         req.body.fontSize,
+        req.user.id,
+      ]);
+      res.sendStatus(200);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/chat-wide",
+  requireAuth,
+  express.json(),
+  async (req, res, next) => {
+    try {
+      // Coerce to a strict boolean so a stray string/number from the client
+      // doesn't end up in the column.
+      const wide = req.body.chatWide === true;
+      await pool.query("UPDATE users SET chat_wide = $1 WHERE id = $2", [
+        wide,
         req.user.id,
       ]);
       res.sendStatus(200);
@@ -437,6 +458,23 @@ app.get("/downloads/ollama-mac-installer.dmg", (req, res) => {
           res.redirect(302, "/downloads/ollama-mac-installer.command");
         }
       },
+    );
+});
+
+app.get("/downloads/ollama-windows-installer.zip", (req, res) => {
+  res
+    .type("application/zip")
+    .set(
+      "Content-Disposition",
+      'attachment; filename="ollama-windows-installer.zip"',
+    )
+    .sendFile(
+      join(
+        __dirname,
+        "ollama-windows-installer",
+        "dist",
+        "ollama-windows-installer.zip",
+      ),
     );
 });
 

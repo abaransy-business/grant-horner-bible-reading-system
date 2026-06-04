@@ -663,14 +663,10 @@
                 <i class="bi bi-download me-1" aria-hidden="true"></i>Download
                 installer
               </a>
-              <p class="small text-secondary mt-3 mb-0">
-                After downloading, open the file and double-click
-                <code>ollama-mac-installer.command</code>. macOS may warn that
-                it's from an unidentified developer — open
-                <strong>System Settings → Privacy &amp; Security</strong>,
-                scroll down to <strong>Security</strong> and click
-                <strong>Open Anyway</strong>.
-              </p>
+              <p
+                id="ollama_setup_install_hint"
+                class="small text-secondary mt-3 mb-0"
+              ></p>
             </section>
           </div>
           <div class="modal-footer">
@@ -706,12 +702,27 @@
         <h5 class="offcanvas-title" id="explain_chat_label">
           <i class="bi bi-stars me-1" aria-hidden="true"></i>AI Assistant
         </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="offcanvas"
-          aria-label="Close"
-        ></button>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <button
+            id="explain_chat_expand"
+            type="button"
+            class="btn btn-sm btn-link p-1 text-secondary"
+            aria-label="Expand chat panel"
+            aria-pressed="false"
+          >
+            <i
+              id="explain_chat_expand_icon"
+              class="bi bi-arrows-angle-expand"
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
+        </div>
       </div>
       <div
         id="explain_chat_status"

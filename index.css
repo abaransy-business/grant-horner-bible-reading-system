@@ -213,8 +213,41 @@ mark[data-highlight-id="search-preview"] {
   outline-offset: 2px;
 }
 
+.highlight-explain-btn.is-busy {
+  cursor: not-allowed;
+  color: var(--bs-secondary-color);
+  opacity: 0.55;
+}
+
+.highlight-explain-btn.is-busy:hover {
+  color: var(--bs-secondary-color);
+}
+
 #explain_chat_panel {
   width: min(420px, 100vw);
+  /* Smooth the width transition when the user toggles expand. Bootstrap's
+     transform-based slide animation isn't affected by transitioning width. */
+  transition: width 0.2s ease;
+}
+
+#explain_chat_panel.is-wide {
+  width: min(900px, 100vw);
+}
+
+#explain_chat_expand {
+  line-height: 1;
+  /* Match the visual weight of Bootstrap's .btn-close so the two controls
+     read as a pair. */
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+#explain_chat_expand:hover {
+  color: var(--bs-body-color) !important;
 }
 
 /* Keep scroll events inside the chat list so wheel/trackpad input never leaks
