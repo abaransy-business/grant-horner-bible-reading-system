@@ -429,16 +429,100 @@ mark[data-highlight-id="search-preview"] {
   resize: none;
   max-height: 160px;
   overscroll-behavior: contain;
+  /* Fixed height so the textarea and send button share an identical visual
+     extent. Form uses align-items: stretch so both controls fill this. */
+  height: 44px;
+  min-height: 44px;
 }
 
 #explain_chat_send {
-  align-self: stretch;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 44px;
   padding-left: 12px;
   padding-right: 12px;
+  flex-shrink: 0;
+}
+
+/* Form padding mirrors the sticky bottom nav's px-4 py-3 rhythm so the
+   input bar and the Previous/Next row share the same vertical baseline
+   when they sit side-by-side. */
+#explain_chat_form {
+  padding: 1rem 1.5rem;
+}
+
+/* --- Empty-state welcome ---
+   The messages container becomes a flex column that vertically centers the
+   welcome block when no messages exist. Once `.has-messages` is added the
+   centering is removed so messages flow from the top as usual. */
+#explain_chat_messages {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#explain_chat_messages.has-messages {
+  justify-content: flex-start;
+}
+
+.explain-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+  color: var(--bs-body-color);
+}
+
+.explain-welcome-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary);
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.explain-welcome-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.375rem;
+}
+
+.explain-welcome-subtitle {
+  font-size: 0.875rem;
+  color: var(--bs-secondary-color);
+  line-height: 1.45;
+  margin: 0;
+  max-width: 38ch;
+}
+
+/* Once a real message exists, hide the welcome block. JS toggles
+   `.has-messages` on the container. */
+#explain_chat_messages.has-messages #explain_chat_welcome {
+  display: none;
+}
+
+/* --- Header refinements --- */
+/* Tighten the offcanvas header so it doesn't loom over an empty body. */
+#explain_chat_panel .offcanvas-header {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* When the chat panel is open, collapse the header toggle to just its
+   icon — the panel header already says "AI Assistant", so the label on
+   the toggle is redundant. */
+body.chat-open #assistant_button .header-action-label {
+  display: none;
+}
+body.chat-open #assistant_button .bi {
+  margin-right: 0 !important;
 }
 
 /* --- Ollama setup modal --- */

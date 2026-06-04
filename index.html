@@ -734,10 +734,21 @@
           id="explain_chat_messages"
           class="flex-grow-1 overflow-auto px-3 py-3"
           aria-live="polite"
-        ></div>
+        >
+          <div id="explain_chat_welcome" class="explain-welcome">
+            <div class="explain-welcome-icon" aria-hidden="true">
+              <i class="bi bi-stars"></i>
+            </div>
+            <h6 class="explain-welcome-title">Ask about today's reading</h6>
+            <p class="explain-welcome-subtitle">
+              I can explain passages, give historical context, or summarize
+              chapters.
+            </p>
+          </div>
+        </div>
         <form
           id="explain_chat_form"
-          class="border-top p-2 d-flex gap-2 align-items-stretch"
+          class="border-top d-flex gap-2 align-items-stretch"
         >
           <textarea
             id="explain_chat_input"

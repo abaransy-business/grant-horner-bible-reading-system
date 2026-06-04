@@ -848,8 +848,11 @@ const initializeApp = async () => {
   chatMessagesEl.appendChild(scrollAnchor);
 
   // Append a message before the sentinel so the sentinel stays at the bottom.
+  // Also flip the container into `has-messages` so the welcome/empty state
+  // gets hidden by CSS once any real content exists.
   const appendChatNode = (node) => {
     chatMessagesEl.insertBefore(node, scrollAnchor);
+    chatMessagesEl.classList.add("has-messages");
   };
 
   // Used when the user submits a new turn or opens the panel — explicitly snap
