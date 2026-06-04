@@ -58,6 +58,16 @@
               <i class="bi bi-search" aria-hidden="true"></i
               ><span class="header-action-label ms-1">Search</span>
             </button>
+            <button
+              id="assistant_button"
+              type="button"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="AI Assistant"
+              hidden
+            >
+              <i class="bi bi-stars" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">AI Assistant</span>
+            </button>
             <div class="dropdown">
               <button
                 type="button"
@@ -584,6 +594,158 @@
       role="toolbar"
       aria-label="Highlight colors"
     ></div>
+
+    <div
+      class="modal fade"
+      id="ollama_setup_modal"
+      tabindex="-1"
+      aria-labelledby="ollama_setup_title"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="ollama_setup_title">
+              <i class="bi bi-stars me-1" aria-hidden="true"></i>Set up the
+              local AI assistant
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-0">
+            <section class="ollama-setup-section">
+              <h6 class="ollama-setup-heading">
+                <span class="ollama-setup-step">1</span>
+                Already installed?
+              </h6>
+              <p id="ollama_setup_body" class="mb-2"></p>
+              <div
+                id="ollama_setup_waiting"
+                class="d-none align-items-center gap-2 small text-secondary"
+              >
+                <div
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></div>
+                <span>Waiting for the assistant to come online…</span>
+              </div>
+            </section>
+
+            <div class="ollama-setup-divider" aria-hidden="true">
+              <span>or</span>
+            </div>
+
+            <section
+              id="ollama_setup_install_section"
+              class="ollama-setup-section"
+            >
+              <h6 class="ollama-setup-heading">
+                <span class="ollama-setup-step">2</span>
+                New here? Install Ollama
+              </h6>
+              <p class="mb-3">
+                Download our one-click installer. It sets up Ollama and a local
+                AI model for you. Local AI models run entirely on your computer.
+                They are <strong>not</strong> hosted on our servers and will
+                <strong>never</strong> send us any data.
+              </p>
+              <a
+                id="ollama_setup_download_link"
+                class="btn btn-primary"
+                href="/downloads/ollama-mac-installer.dmg"
+                download
+              >
+                <i class="bi bi-download me-1" aria-hidden="true"></i>Download
+                installer
+              </a>
+              <p class="small text-secondary mt-3 mb-0">
+                After downloading, open the file and double-click
+                <code>ollama-mac-installer.command</code>. macOS may warn that
+                it's from an unidentified developer — open
+                <strong>System Settings → Privacy &amp; Security</strong>,
+                scroll down to <strong>Security</strong> and click
+                <strong>Open Anyway</strong>.
+              </p>
+            </section>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Not now
+            </button>
+            <button
+              id="ollama_setup_retry"
+              type="button"
+              class="btn btn-primary"
+            >
+              <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Check
+              again
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="offcanvas offcanvas-end"
+      tabindex="-1"
+      id="explain_chat_panel"
+      aria-labelledby="explain_chat_label"
+      data-bs-scroll="true"
+      data-bs-backdrop="false"
+    >
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="explain_chat_label">
+          <i class="bi bi-stars me-1" aria-hidden="true"></i>AI Assistant
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div
+        id="explain_chat_status"
+        class="px-3 py-2 small border-bottom"
+        aria-live="polite"
+      ></div>
+      <div class="offcanvas-body d-flex flex-column p-0">
+        <div
+          id="explain_chat_messages"
+          class="flex-grow-1 overflow-auto px-3 py-3"
+          aria-live="polite"
+        ></div>
+        <form
+          id="explain_chat_form"
+          class="border-top p-2 d-flex gap-2 align-items-stretch"
+        >
+          <textarea
+            id="explain_chat_input"
+            class="form-control"
+            rows="2"
+            placeholder="Ask a question..."
+            aria-label="Chat message"
+          ></textarea>
+          <button
+            id="explain_chat_send"
+            type="submit"
+            class="btn btn-primary"
+            aria-label="Send"
+          >
+            <i class="bi bi-send-fill" aria-hidden="true"></i>
+          </button>
+        </form>
+      </div>
+    </div>
 
     <div
       class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"

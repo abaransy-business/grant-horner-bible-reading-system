@@ -406,6 +406,40 @@ app.get("/sitemap.xml", (req, res) => {
   res.type("application/xml").sendFile(join(__dirname, "sitemap.xml"));
 });
 
+// Public downloads for the local-AI setup helper. These are unauthenticated
+// because (a) the contents are not secret (the same script lives in the
+// repo) and (b) we want the link in the "setup needed" modal to work even
+// if the session expired.
+app.get("/downloads/ollama-mac-installer.command", (req, res) => {
+  res
+    .type("application/octet-stream")
+    .set(
+      "Content-Disposition",
+      'attachment; filename="ollama-mac-installer.command"',
+    )
+    .sendFile(
+      join(__dirname, "ollama-mac-installer", "ollama-mac-installer.command"),
+    );
+});
+
+app.get("/downloads/ollama-mac-installer.dmg", (req, res) => {
+  res
+    .type("application/x-apple-diskimage")
+    .set(
+      "Content-Disposition",
+      'attachment; filename="ollama-mac-installer.dmg"',
+    )
+    .sendFile(
+      join(__dirname, "ollama-mac-installer", "dist", "ollama-mac-installer.dmg"),
+      (err) => {
+        if (err && !res.headersSent) {
+          // DMG hasn't been built — fall back to the .command file.
+          res.redirect(302, "/downloads/ollama-mac-installer.command");
+        }
+      },
+    );
+});
+
 app.use(express.static(__dirname, { index: false }));
 
 const PORT = process.env.PORT || 3000;

@@ -369,6 +369,39 @@ const initializeApp = async () => {
     popup.appendChild(btn);
   });
 
+  // "Explain" button — only on Mac desktop (fine pointer + Mac platform).
+  // Talks to a local Ollama server the user installed via the mac installer.
+  const isMacDesktop =
+    /Mac/i.test(navigator.platform || navigator.userAgent || "") &&
+    !/iPhone|iPad|iPod/i.test(navigator.userAgent || "") &&
+    window.matchMedia("(pointer: fine)").matches;
+
+  let explainBtn = null;
+  if (isMacDesktop) {
+    explainBtn = document.createElement("span");
+    explainBtn.className = "highlight-explain-btn";
+    explainBtn.setAttribute("role", "button");
+    explainBtn.tabIndex = 0;
+    explainBtn.innerHTML =
+      '<i class="bi bi-stars" aria-hidden="true"></i><span>Explain</span>';
+    explainBtn.style.display = "none";
+    const handleExplain = () => {
+      if (!pendingText) return;
+      const text = pendingText;
+      window.getSelection().removeAllRanges();
+      hidePopup();
+      openExplainChat(text);
+    };
+    explainBtn.addEventListener("click", handleExplain);
+    explainBtn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleExplain();
+      }
+    });
+    popup.appendChild(explainBtn);
+  }
+
   const removeBtn = document.createElement("span");
   removeBtn.className = "highlight-remove-btn";
   removeBtn.textContent = "Remove Highlight";
@@ -440,6 +473,7 @@ const initializeApp = async () => {
     [...popup.querySelectorAll(".highlight-swatch")].forEach(
       (s) => (s.style.display = ""),
     );
+    if (explainBtn) explainBtn.style.display = "";
     removeBtn.style.display = "none";
     anchorRectFn = () => pendingRange.getBoundingClientRect();
     popup.classList.add("visible");
@@ -456,6 +490,7 @@ const initializeApp = async () => {
     [...popup.querySelectorAll(".highlight-swatch")].forEach(
       (s) => (s.style.display = "none"),
     );
+    if (explainBtn) explainBtn.style.display = "none";
     removeBtn.style.display = "";
     removeBtn.dataset.targetId = id;
     anchorRectFn = () => mark.getBoundingClientRect();
@@ -541,6 +576,483 @@ const initializeApp = async () => {
 
   // Reposition popup on scroll
   document.addEventListener("scroll", positionFromAnchor, { passive: true });
+
+  // --- Explain chat panel (local Ollama / Gemma) ---
+  const OLLAMA_URL = "http://localhost:11434";
+  const OLLAMA_MODEL = "gemma4";
+  const EXPLAIN_SYSTEM_PROMPT =
+    "You explain selected Bible passages carefully. Distinguish text, context, and interpretation. Avoid inventing historical or theological claims. Be concise unless the user asks for depth.";
+
+  const chatPanelEl = document.getElementById("explain_chat_panel");
+  const chatMessagesEl = document.getElementById("explain_chat_messages");
+  const chatStatusEl = document.getElementById("explain_chat_status");
+  const chatForm = document.getElementById("explain_chat_form");
+  const chatInput = document.getElementById("explain_chat_input");
+  const chatSendBtn = document.getElementById("explain_chat_send");
+
+  const ASSISTANT_LABEL = "Assistant";
+
+  // --- Ollama readiness gate ---
+  // Before opening the chat for any reason, we check that the local Ollama
+  // server is reachable and has the configured model installed. If not, we
+  // show a modal that either guides the user to launch Ollama (and polls in
+  // the background so the modal dismisses itself when Ollama comes online)
+  // or, as a fallback after a few failed checks, offers our installer DMG.
+  const setupModalEl = document.getElementById("ollama_setup_modal");
+  const setupTitleEl = document.getElementById("ollama_setup_title");
+  const setupBodyEl = document.getElementById("ollama_setup_body");
+  const setupWaitingEl = document.getElementById("ollama_setup_waiting");
+  const setupInstallSection = document.getElementById(
+    "ollama_setup_install_section",
+  );
+  const setupRetryBtn = document.getElementById("ollama_setup_retry");
+  let setupModal = null;
+  if (setupModalEl) {
+    setupModal = bootstrap.Modal.getOrCreateInstance(setupModalEl);
+  }
+
+  // Result shape: { ok: true } | { ok: false, reason: "offline"|"missing-model", message }
+  const checkOllamaStatus = async () => {
+    let res;
+    try {
+      res = await fetch(`${OLLAMA_URL}/api/tags`, {
+        method: "GET",
+        // Ollama doesn't need cookies and they confuse the CORS check.
+        credentials: "omit",
+        cache: "no-store",
+      });
+    } catch (err) {
+      // TypeError "Failed to fetch" — either Ollama isn't running, or it's
+      // running but didn't approve our origin. Either way the user-facing
+      // remediation is the same.
+      return {
+        ok: false,
+        reason: "offline",
+        message: "Can't reach the local AI assistant.",
+      };
+    }
+    if (!res.ok) {
+      return {
+        ok: false,
+        reason: "offline",
+        message: `Ollama responded with status ${res.status}.`,
+      };
+    }
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      return {
+        ok: false,
+        reason: "offline",
+        message: "Ollama returned an unexpected response.",
+      };
+    }
+    const models = Array.isArray(data?.models) ? data.models : [];
+    // Names look like "gemma4:latest" or "gemma4:12b"; match on the base name.
+    const hasModel = models.some(
+      (m) => typeof m?.name === "string" && m.name.split(":")[0] === OLLAMA_MODEL,
+    );
+    if (!hasModel) {
+      return {
+        ok: false,
+        reason: "missing-model",
+        message: `Ollama is running, but the ${OLLAMA_MODEL} model isn't installed.`,
+      };
+    }
+    return { ok: true };
+  };
+
+  // Poll until Ollama is ready or the user cancels. Updates the modal body
+  // as conditions change so the user gets feedback.
+  // Returns a Promise<boolean> resolved with `true` when ready, `false` if
+  // the user dismissed the modal.
+  let setupActive = null; // dedupe concurrent calls
+  const ensureOllamaReady = async () => {
+    if (setupActive) return setupActive;
+    setupActive = (async () => {
+      const first = await checkOllamaStatus();
+      if (first.ok) return true;
+      if (!setupModal) return false;
+
+      // The user dismissed the modal — resolve false.
+      let dismissed = false;
+      const onHidden = () => {
+        dismissed = true;
+      };
+      setupModalEl.addEventListener("hidden.bs.modal", onHidden, {
+        once: true,
+      });
+
+      const render = (status) => {
+        // The install section is always visible — it's useful for both
+        // first-time setup and re-running the installer (e.g. to re-apply
+        // OLLAMA_ORIGINS or pull a missing model).
+        setupInstallSection.classList.remove("d-none");
+        if (status.reason === "missing-model") {
+          setupTitleEl.innerHTML =
+            '<i class="bi bi-stars me-1" aria-hidden="true"></i>Download the AI model';
+          setupBodyEl.innerHTML =
+            `The local AI assistant is running, but the <code>${OLLAMA_MODEL}</code> model hasn't been downloaded yet. ` +
+            "Re-run the installer to download it, or open Terminal and run " +
+            `<code>ollama pull ${OLLAMA_MODEL}</code>.`;
+          setupWaitingEl.classList.add("d-none");
+        } else {
+          // offline
+          setupTitleEl.innerHTML =
+            '<i class="bi bi-stars me-1" aria-hidden="true"></i>Start the local AI assistant';
+          setupBodyEl.innerHTML =
+            "The local AI assistant doesn't appear to be running. " +
+            "Open the <strong>Ollama</strong> app from your Applications folder " +
+            "(or press <kbd>⌘ Space</kbd> and type <em>Ollama</em>). " +
+            "This window will continue automatically as soon as it's ready.";
+          setupWaitingEl.classList.remove("d-none");
+        }
+      };
+
+      render(first);
+      setupModal.show();
+
+      // Poll while the modal is open.
+      let manualCheck = false;
+      const onManualCheck = () => {
+        manualCheck = true;
+      };
+      setupRetryBtn.addEventListener("click", onManualCheck);
+
+      try {
+        while (!dismissed) {
+          // Wait either 2s or until the user clicks "Check again".
+          await new Promise((resolve) => {
+            const t = setTimeout(resolve, 2000);
+            const interval = setInterval(() => {
+              if (manualCheck || dismissed) {
+                clearTimeout(t);
+                clearInterval(interval);
+                resolve();
+              }
+            }, 50);
+          });
+          if (dismissed) return false;
+          manualCheck = false;
+          const status = await checkOllamaStatus();
+          if (status.ok) {
+            setupModal.hide();
+            return true;
+          }
+          render(status);
+        }
+        return false;
+      } finally {
+        setupRetryBtn.removeEventListener("click", onManualCheck);
+        setupModalEl.removeEventListener("hidden.bs.modal", onHidden);
+      }
+    })();
+    try {
+      return await setupActive;
+    } finally {
+      setupActive = null;
+    }
+  };
+
+  // Lazy-load `marked` so we can render markdown synchronously per stream chunk.
+  // <md-block>'s async render lifecycle races when content updates rapidly, so
+  // for streaming assistant bubbles we render markdown ourselves into a plain div.
+  let markedPromise = null;
+  const getMarked = () => {
+    if (!markedPromise) {
+      markedPromise =
+        import("https://cdn.jsdelivr.net/npm/marked/src/marked.min.js").then(
+          (m) => {
+            const marked = m.marked;
+            marked.setOptions({ gfm: true, breaks: false });
+            return marked;
+          },
+        );
+    }
+    return markedPromise;
+  };
+  // Kick off the load up-front so the first chunk doesn't have to wait.
+  getMarked().catch(() => {});
+
+  // Auto-scroll-to-bottom is handled by CSS scroll-anchoring (overflow-anchor)
+  // on a sentinel element appended after every message. While the sentinel is
+  // in view (user is at the bottom), the browser keeps the viewport glued to
+  // it as content grows. When the user scrolls up, the sentinel scrolls out
+  // of view and the browser preserves the user's reading position. No JS
+  // intervention required — and no races to debug.
+  //
+  // The sentinel must always be the last child of #explain_chat_messages.
+  const scrollAnchor = document.createElement("div");
+  scrollAnchor.className = "explain-scroll-anchor";
+  scrollAnchor.setAttribute("aria-hidden", "true");
+  chatMessagesEl.appendChild(scrollAnchor);
+
+  // Append a message before the sentinel so the sentinel stays at the bottom.
+  const appendChatNode = (node) => {
+    chatMessagesEl.insertBefore(node, scrollAnchor);
+  };
+
+  // Used when the user submits a new turn or opens the panel — explicitly snap
+  // to bottom regardless of where they were. Anchor takes over from there.
+  const snapToBottom = () => {
+    scrollAnchor.scrollIntoView({ block: "end" });
+  };
+
+  // Conversation persists across panel open/close within the page session.
+  // messages = full history sent to Ollama. uiMessages = what's rendered (no system).
+  let chatMessages = [];
+  let chatBusy = false;
+  let chatOffcanvas = null;
+  if (chatPanelEl) {
+    chatOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(chatPanelEl);
+  }
+
+  const setChatStatus = (text, isError = false) => {
+    if (!chatStatusEl) return;
+    chatStatusEl.textContent = text || "";
+    chatStatusEl.classList.toggle("is-error", !!isError);
+  };
+
+  const renderChatMessage = (role, content, { markdown = true } = {}) => {
+    const wrap = document.createElement("div");
+    wrap.className = `explain-msg ${role}`;
+    const label = document.createElement("div");
+    label.className = "explain-msg-role";
+    label.textContent = role === "user" ? "You" : ASSISTANT_LABEL;
+    const body = document.createElement("div");
+    body.className = "explain-msg-body";
+    if (markdown && role !== "user" && typeof customElements !== "undefined") {
+      const md = document.createElement("md-block");
+      body.appendChild(md);
+      md.mdContent = content;
+    } else {
+      // User messages: preserve newlines, no markdown rendering needed.
+      body.textContent = content;
+      body.style.whiteSpace = "pre-wrap";
+    }
+    wrap.appendChild(label);
+    wrap.appendChild(body);
+    appendChatNode(wrap);
+    return body;
+  };
+
+  const renderTypingIndicator = () => {
+    const wrap = document.createElement("div");
+    wrap.className = "explain-msg assistant explain-typing";
+    wrap.innerHTML =
+      `<div class="explain-msg-role">${ASSISTANT_LABEL}</div>` +
+      '<div class="explain-msg-body explain-typing-dots">' +
+      "<span></span><span></span><span></span></div>";
+    appendChatNode(wrap);
+    return wrap;
+  };
+
+  // Create an empty assistant bubble we can stream markdown into. We render
+  // markdown with `marked` ourselves (instead of <md-block>) so each chunk
+  // updates synchronously without any race condition.
+  const createAssistantStreamBubble = () => {
+    const wrap = document.createElement("div");
+    wrap.className = "explain-msg assistant";
+    const label = document.createElement("div");
+    label.className = "explain-msg-role";
+    label.textContent = ASSISTANT_LABEL;
+    const body = document.createElement("div");
+    body.className = "explain-msg-body";
+    const renderTarget = document.createElement("div");
+    renderTarget.className = "explain-md";
+    body.appendChild(renderTarget);
+    wrap.appendChild(label);
+    wrap.appendChild(body);
+    appendChatNode(wrap);
+
+    let lastText = "";
+    let pending = null;
+    const update = (text) => {
+      if (text === lastText) return;
+      lastText = text;
+      if (pending) return; // a frame is already scheduled
+      pending = requestAnimationFrame(async () => {
+        pending = null;
+        try {
+          const marked = await getMarked();
+          renderTarget.innerHTML = marked.parse(lastText);
+        } catch {
+          // Fallback: just dump text if marked failed to load.
+          renderTarget.textContent = lastText;
+        }
+        // No manual scroll — CSS scroll-anchoring on `.explain-scroll-anchor`
+        // keeps the viewport pinned to the bottom as long as the user is there.
+      });
+    };
+    return { wrap, update };
+  };
+
+  const setChatBusy = (busy) => {
+    chatBusy = busy;
+    chatSendBtn.disabled = busy;
+    chatInput.disabled = busy;
+  };
+
+  // Stream a reply from Ollama, calling onChunk(deltaText, fullText) for each token.
+  const streamFromOllama = async (messages, onChunk) => {
+    const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        stream: true,
+        messages,
+      }),
+    });
+    if (!res.ok || !res.body) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `Ollama returned ${res.status}${text ? `: ${text}` : ""}`,
+      );
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let full = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // Ollama streams newline-delimited JSON objects.
+      let nlIdx;
+      while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, nlIdx).trim();
+        buffer = buffer.slice(nlIdx + 1);
+        if (!line) continue;
+        let obj;
+        try {
+          obj = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (obj.error) throw new Error(obj.error);
+        const delta = obj?.message?.content ?? "";
+        if (delta) {
+          full += delta;
+          onChunk(delta, full);
+        }
+        if (obj.done) return full;
+      }
+    }
+    // Flush any trailing buffered line.
+    const tail = buffer.trim();
+    if (tail) {
+      try {
+        const obj = JSON.parse(tail);
+        const delta = obj?.message?.content ?? "";
+        if (delta) {
+          full += delta;
+          onChunk(delta, full);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return full;
+  };
+
+  const submitChatTurn = async (userText, { displayUser = true } = {}) => {
+    if (chatBusy || !userText.trim()) return;
+    if (chatMessages.length === 0) {
+      chatMessages.push({ role: "system", content: EXPLAIN_SYSTEM_PROMPT });
+    }
+    chatMessages.push({ role: "user", content: userText });
+    if (displayUser) renderChatMessage("user", userText, { markdown: false });
+    // Submitting a new turn should snap them to the bottom regardless of
+    // where they had scrolled to.
+    snapToBottom();
+    setChatStatus("");
+    setChatBusy(true);
+    const typingEl = renderTypingIndicator();
+    let bubble = null;
+    try {
+      let started = false;
+      const reply = await streamFromOllama(chatMessages, (_delta, full) => {
+        if (!started) {
+          typingEl.remove();
+          bubble = createAssistantStreamBubble();
+          started = true;
+        }
+        bubble.update(full);
+      });
+      if (!started) {
+        // Stream finished without any content — clean up the indicator.
+        typingEl.remove();
+        bubble = createAssistantStreamBubble();
+        bubble.update(reply || "");
+      }
+      chatMessages.push({ role: "assistant", content: reply });
+    } catch (err) {
+      typingEl.remove();
+      if (bubble) bubble.wrap.remove();
+      // Pop the user message off history so a retry doesn't double-count it.
+      chatMessages.pop();
+      const msg = /Failed to fetch|NetworkError/i.test(String(err))
+        ? `Couldn't reach Ollama at ${OLLAMA_URL}. Make sure the Ollama app is running and that this site is in OLLAMA_ORIGINS.`
+        : `Ollama error: ${err.message || err}`;
+      setChatStatus(msg, true);
+    } finally {
+      setChatBusy(false);
+      chatInput.focus();
+    }
+  };
+
+  async function openExplainChat(selectedText) {
+    if (!chatOffcanvas) return;
+    // Make sure Ollama is reachable + the model is installed before opening
+    // the chat. If the user cancels the setup modal, do nothing.
+    const ready = await ensureOllamaReady();
+    if (!ready) return;
+    chatOffcanvas.show();
+    // Quote the selection so the user sees what's being explained.
+    const quoted = selectedText
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
+    const prompt = `Explain this text\n\n${quoted}`;
+    // Render the quoted block as a "user" bubble, then send.
+    renderChatMessage("user", prompt, { markdown: false });
+    submitChatTurn(prompt, { displayUser: false });
+  }
+
+  if (chatForm) {
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatInput.value = "";
+      submitChatTurn(text);
+    });
+
+    // Cmd/Ctrl+Enter or plain Enter (without Shift) sends.
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
+  }
+
+  // Global header "Assistant" button — only on Mac desktop. Opens the chat
+  // panel without a pre-filled prompt so the user can ask anything.
+  const assistantButton = document.getElementById("assistant_button");
+  if (assistantButton && isMacDesktop && chatOffcanvas) {
+    assistantButton.hidden = false;
+    assistantButton.addEventListener("click", async () => {
+      const ready = await ensureOllamaReady();
+      if (!ready) return;
+      chatOffcanvas.show();
+      snapToBottom();
+      // Focus the input shortly after the offcanvas finishes its slide-in.
+      setTimeout(() => chatInput?.focus(), 200);
+    });
+  }
 
   // Hide sticky header on scroll-down, reveal on scroll-up
   const stickyHeader = document.getElementById("sticky_header");

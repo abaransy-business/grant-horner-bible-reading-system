@@ -186,3 +186,251 @@ mark[data-highlight-id="search-preview"] {
   outline: 2px solid var(--bs-primary);
   outline-offset: 2px;
 }
+
+/* --- Explain (local AI) feature --- */
+
+.highlight-explain-btn {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bs-primary);
+  padding: 4px 8px;
+  line-height: 1;
+  white-space: nowrap;
+  border-left: 1px solid var(--bs-border-color);
+  margin-left: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.highlight-explain-btn:hover {
+  color: var(--bs-link-hover-color);
+}
+
+.highlight-explain-btn:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+#explain_chat_panel {
+  width: min(420px, 100vw);
+}
+
+/* Keep scroll events inside the chat list so wheel/trackpad input never leaks
+   through to the document beneath the offcanvas. */
+#explain_chat_messages {
+  overscroll-behavior: contain;
+  /* Enable native scroll anchoring (it's the default, but be explicit).
+     The browser will keep the user's reading position stable when content
+     is added or modified above their viewport. */
+  overflow-anchor: auto;
+}
+
+/* Force every existing message to NOT be an anchor candidate, except the
+   sentinel at the bottom. This way:
+   - When the user is at the bottom, the sentinel is the anchor and the
+     viewport stays glued to it as new content arrives.
+   - When the user has scrolled up, the sentinel is out of view, so the
+     browser uses standard scroll-position preservation and their reading
+     position stays stable. No JS required. */
+#explain_chat_messages > * {
+  overflow-anchor: none;
+}
+
+#explain_chat_messages > .explain-scroll-anchor {
+  overflow-anchor: auto;
+  /* 1px height keeps it as a valid anchor target without taking visual space. */
+  height: 1px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+#explain_chat_status {
+  color: var(--bs-secondary-color);
+  background: var(--bs-tertiary-bg);
+  min-height: 0;
+}
+
+#explain_chat_status:empty {
+  display: none;
+}
+
+#explain_chat_status.is-error {
+  color: var(--bs-danger);
+}
+
+.explain-msg {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.explain-msg-role {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color);
+  margin-bottom: 4px;
+}
+
+.explain-msg-body {
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.explain-msg.user .explain-msg-body {
+  background: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary-border-subtle);
+}
+
+.explain-msg-body p:last-child,
+.explain-msg-body md-block p:last-child,
+.explain-msg-body .explain-md > :last-child {
+  margin-bottom: 0;
+}
+
+.explain-msg-body .explain-md > :first-child {
+  margin-top: 0;
+}
+
+.explain-msg-body .explain-md ul,
+.explain-msg-body .explain-md ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.explain-msg-body .explain-md pre {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 6px;
+  padding: 8px;
+  overflow-x: auto;
+  font-size: 13px;
+}
+
+.explain-msg-body .explain-md code {
+  background: var(--bs-body-bg);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.explain-msg-body .explain-md pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.explain-msg-body blockquote {
+  font-size: 13px;
+  color: var(--bs-secondary-color);
+  border-left: 3px solid var(--bs-border-color);
+  margin: 0 0 6px 0;
+  padding: 0 0 0 8px;
+}
+
+.explain-typing-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: var(--bs-secondary-color);
+  animation: explain-typing 1.2s infinite ease-in-out;
+}
+
+.explain-typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.explain-typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes explain-typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+#explain_chat_input {
+  resize: none;
+  max-height: 160px;
+  overscroll-behavior: contain;
+}
+
+#explain_chat_send {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* --- Ollama setup modal --- */
+
+.ollama-setup-section {
+  padding: 1.25rem 1.5rem;
+}
+
+.ollama-setup-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color);
+  margin-bottom: 0.75rem;
+}
+
+.ollama-setup-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--bs-secondary-bg);
+  color: var(--bs-body-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+.ollama-setup-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ollama-setup-divider::before,
+.ollama-setup-divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--bs-border-color);
+}
+
+#ollama_setup_install_section .btn-primary {
+  font-weight: 500;
+}
+
+#ollama_setup_install_section code {
+  font-size: 0.85em;
+  word-break: break-word;
+}
