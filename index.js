@@ -865,6 +865,16 @@ const initializeApp = async () => {
   let chatOffcanvas = null;
   if (chatPanelEl) {
     chatOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(chatPanelEl);
+
+    // Toggle `chat-open` on <body> so CSS can reserve right-side space for
+    // the chat panel and let the chapter content reflow into a narrower
+    // column instead of being painted over.
+    chatPanelEl.addEventListener("show.bs.offcanvas", () => {
+      document.body.classList.add("chat-open");
+    });
+    chatPanelEl.addEventListener("hidden.bs.offcanvas", () => {
+      document.body.classList.remove("chat-open");
+    });
   }
 
   const setChatStatus = (text, isError = false) => {
@@ -1119,6 +1129,9 @@ const initializeApp = async () => {
   const applyChatWide = (wide) => {
     if (!chatPanelEl || !chatExpandBtn || !chatExpandIcon) return;
     chatPanelEl.classList.toggle("is-wide", wide);
+    // Mirror the wide state onto <body> so the CSS rule that reserves
+    // right-side space knows how much to reserve (420px vs 900px).
+    document.body.classList.toggle("chat-wide-open", wide);
     chatExpandBtn.setAttribute("aria-pressed", wide ? "true" : "false");
     chatExpandBtn.setAttribute(
       "aria-label",

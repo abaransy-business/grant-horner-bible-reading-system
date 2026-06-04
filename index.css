@@ -1,6 +1,37 @@
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   padding-bottom: 80px;
+  /* Smooth the squish-in / squish-out so it visually tracks the chat
+     panel's slide animation. Bootstrap's offcanvas uses 0.3s ease-in-out
+     by default — match it. */
+  transition: padding-right 0.3s ease-in-out;
+}
+
+/* When the chat panel is open, reserve right-side space so the reading
+   content reflows into a narrower column instead of being painted over
+   by the chat. The reserved width mirrors the chat panel's actual
+   rendered width — `min(420px, 100vw)` normally, `min(900px, 100vw)` in
+   wide mode — so they're always in lockstep at every viewport size.
+
+   Below 768px the chat panel takes (close to) the full viewport, so we
+   skip the squish entirely — there's no reading column to preserve. The
+   panel acts as a normal overlay on phones and small tablets. */
+@media (min-width: 768px) {
+  body.chat-open {
+    padding-right: min(420px, 100vw);
+  }
+  /* The fixed bottom nav (Previous/Next) doesn't participate in body's box
+     model, so we manually reserve its right edge to match. */
+  body.chat-open #sticky_nav {
+    right: min(420px, 100vw);
+  }
+
+  body.chat-open.chat-wide-open {
+    padding-right: min(900px, 100vw);
+  }
+  body.chat-open.chat-wide-open #sticky_nav {
+    right: min(900px, 100vw);
+  }
 }
 
 #sticky_header {
@@ -40,6 +71,9 @@ body {
   background-color: color-mix(in srgb, var(--bs-body-bg) 85%, transparent);
   backdrop-filter: saturate(180%) blur(10px);
   -webkit-backdrop-filter: saturate(180%) blur(10px);
+  /* Animates with the body squish so left/right edges move in sync when
+     the chat opens or expands. Matches Bootstrap offcanvas (0.3s). */
+  transition: right 0.3s ease-in-out;
 }
 
 .bible-content-container {
@@ -226,8 +260,9 @@ mark[data-highlight-id="search-preview"] {
 #explain_chat_panel {
   width: min(420px, 100vw);
   /* Smooth the width transition when the user toggles expand. Bootstrap's
-     transform-based slide animation isn't affected by transitioning width. */
-  transition: width 0.2s ease;
+     transform-based slide animation isn't affected by transitioning width.
+     Matches body's squish transition (0.3s ease-in-out). */
+  transition: width 0.3s ease-in-out;
 }
 
 #explain_chat_panel.is-wide {
