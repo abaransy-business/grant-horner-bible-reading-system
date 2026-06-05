@@ -642,12 +642,7 @@ const initializeApp = async () => {
     mac: {
       downloadHref: "/downloads/ollama-mac-installer.dmg",
       installHint:
-        "After downloading, open the file and double-click " +
-        "<code>ollama-mac-installer.command</code>. macOS may warn that it's " +
-        "from an unidentified developer — open " +
-        "<strong>System Settings → Privacy &amp; Security</strong>, " +
-        "scroll down to <strong>Security</strong> and click " +
-        "<strong>Open Anyway</strong>.",
+        "Local AI models, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
         "The local AI assistant doesn't appear to be running. " +
         "Open the <strong>Ollama</strong> app from your Applications folder " +
@@ -657,10 +652,7 @@ const initializeApp = async () => {
     windows: {
       downloadHref: "/downloads/ollama-windows-installer.zip",
       installHint:
-        "After downloading, extract the ZIP and double-click " +
-        "<code>ollama-windows-installer.cmd</code>. Windows SmartScreen may " +
-        "warn that it's from an unknown publisher — click " +
-        "<strong>More info</strong>, then <strong>Run anyway</strong>.",
+        "Local AI models, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
         "The local AI assistant doesn't appear to be running. " +
         "Open <strong>Ollama</strong> from the Start menu (or look for the " +
@@ -712,7 +704,8 @@ const initializeApp = async () => {
     const models = Array.isArray(data?.models) ? data.models : [];
     // Names look like "gemma4:latest" or "gemma4:12b"; match on the base name.
     const hasModel = models.some(
-      (m) => typeof m?.name === "string" && m.name.split(":")[0] === OLLAMA_MODEL,
+      (m) =>
+        typeof m?.name === "string" && m.name.split(":")[0] === OLLAMA_MODEL,
     );
     if (!hasModel) {
       return {
