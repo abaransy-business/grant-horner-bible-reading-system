@@ -642,7 +642,7 @@ const initializeApp = async () => {
     mac: {
       downloadHref: "/downloads/ollama-mac-installer.dmg",
       installHint:
-        "Local AI models, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
+        "Make sure to use a local AI model, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
         "The local AI assistant doesn't appear to be running. " +
         "Open the <strong>Ollama</strong> app from your Applications folder " +
@@ -652,7 +652,7 @@ const initializeApp = async () => {
     windows: {
       downloadHref: "/downloads/ollama-windows-installer.zip",
       installHint:
-        "Local AI models, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
+        "Make sure to use a local AI model, like Google's Gemma4, run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
         "The local AI assistant doesn't appear to be running. " +
         "Open <strong>Ollama</strong> from the Start menu (or look for the " +
