@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Grant Horner's Bible-Reading System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+    <script src="index.js" type="module"></script>
+  </head>
+  <body>
+    <header id="sticky_header">
+      <a
+        href="#chapter_content"
+        class="visually-hidden visually-hidden-focusable"
+        >Skip to reading content</a
+      >
+      <div
+        class="container d-flex align-items-center justify-content-between gap-3 py-2"
+      >
+        <h1 class="h5 mb-0" id="chapter_heading" aria-live="polite"></h1>
+        <nav aria-label="Application Tools" class="flex-shrink-0">
+          <div class="d-flex gap-2 align-items-center">
+            <button
+              id="my_progress_button"
+              type="button"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="My Progress"
+            >
+              <i class="bi bi-bar-chart-steps" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">My Progress</span>
+            </button>
+            <button
+              id="highlights_button"
+              type="button"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="Highlights"
+            >
+              <i class="bi bi-pencil-fill" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">Highlights</span>
+            </button>
+            <button
+              id="search_button"
+              type="button"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="Search"
+            >
+              <i class="bi bi-search" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">Search</span>
+            </button>
+            <button
+              id="assistant_button"
+              type="button"
+              class="btn btn-outline-primary btn-sm header-action"
+              aria-label="AI Assistant"
+              hidden
+            >
+              <i class="bi bi-stars" aria-hidden="true"></i
+              ><span class="header-action-label ms-1">AI Assistant</span>
+            </button>
+            <div class="dropdown">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="More options"
+              >
+                <i class="bi bi-three-dots" aria-hidden="true"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button
+                    id="resources_button"
+                    type="button"
+                    class="dropdown-item"
+                  >
+                    <i class="bi bi-book me-2" aria-hidden="true"></i>Resources
+                  </button>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <button
+                    id="settings_button"
+                    type="button"
+                    class="dropdown-item"
+                  >
+                    <i class="bi bi-gear me-2" aria-hidden="true"></i>Settings
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container py-4">
+      <main>
+        <div
+          class="bible-content-container p-3 mb-4 bg-body border rounded shadow-sm"
+        >
+          <article aria-label="Current chapter" aria-live="polite">
+            <md-block id="chapter_content" tabindex="-1"></md-block>
+          </article>
+        </div>
+      </main>
+    </div>
+
+    <nav id="sticky_nav" class="border-top">
+      <div
+        id="nav_reading"
+        class="d-flex justify-content-between align-items-center px-4 py-3 bg-body"
+      >
+        <button
+          id="previous_chapter_button"
+          class="btn btn-secondary btn-md px-4"
+          type="button"
+          disabled
+        >
+          Previous
+        </button>
+        <button
+          id="next_chapter_button"
+          class="btn btn-primary btn-md px-4"
+          type="button"
+        >
+          Next
+        </button>
+      </div>
+      <div
+        id="nav_preview"
+        class="d-flex align-items-center justify-content-between px-4 py-3 text-bg-warning"
+        style="display: none !important"
+        role="status"
+        aria-live="polite"
+      >
+        <span id="nav_preview_message">You're previewing a highlight.</span>
+        <button
+          id="resume_reading_banner_button"
+          class="btn btn-dark btn-sm ms-3 flex-shrink-0"
+        >
+          Resume Reading
+        </button>
+      </div>
+    </nav>
+    <div
+      class="modal fade"
+      id="settings_modal"
+      tabindex="-1"
+      aria-labelledby="settings_modal_title"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="settings_modal_title">Settings</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-4">
+              <label for="font_size_control" class="form-label fw-bold">
+                Font Size: <span id="font_size_value">18</span>px
+              </label>
+              <input
+                type="range"
+                id="font_size_control"
+                class="form-range"
+                min="14"
+                max="100"
+                value="18"
+              />
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="theme_toggle"
+                role="switch"
+              />
+              <label class="form-check-label" for="theme_toggle"
+                >Dark mode</label
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="highlights_modal"
+      tabindex="-1"
+      aria-labelledby="highlights_modal_title"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header align-items-start">
+            <div class="me-auto">
+              <h2 class="modal-title h5 mb-1" id="highlights_modal_title">
+                Highlights
+              </h2>
+              <p class="text-muted small mb-0">
+                Select any verse text while reading to highlight it in a color
+                of your choice. All your highlights live here — search them,
+                revisit them, or jump back to their chapter in one tap.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input
+              type="text"
+              id="highlights_search"
+              class="form-control mb-3"
+              placeholder="Search highlights..."
+              aria-label="Search highlights"
+            />
+            <div id="highlights_list" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="search_modal"
+      tabindex="-1"
+      aria-labelledby="search_modal_title"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="search_modal_title">Search</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  type="button"
+                  class="nav-link active"
+                  id="search_tab_verses"
+                  data-bs-toggle="tab"
+                  data-bs-target="#search_tab_verses_pane"
+                  role="tab"
+                  aria-controls="search_tab_verses_pane"
+                  aria-selected="true"
+                >
+                  Verses
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  type="button"
+                  class="nav-link"
+                  id="search_tab_books"
+                  data-bs-toggle="tab"
+                  data-bs-target="#search_tab_books_pane"
+                  role="tab"
+                  aria-controls="search_tab_books_pane"
+                  aria-selected="false"
+                >
+                  Books
+                </button>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div
+                class="tab-pane fade show active"
+                id="search_tab_verses_pane"
+                role="tabpanel"
+                aria-labelledby="search_tab_verses"
+              >
+                <input
+                  type="text"
+                  id="search_input"
+                  class="form-control mb-3"
+                  placeholder="Search the Bible..."
+                  aria-label="Search the Bible"
+                />
+                <div id="search_list" aria-live="polite"></div>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="search_tab_books_pane"
+                role="tabpanel"
+                aria-labelledby="search_tab_books"
+              >
+                <input
+                  type="text"
+                  id="nav_search_input"
+                  class="form-control mb-3"
+                  placeholder="Go to book or chapter (e.g. Matthew 15)..."
+                  aria-label="Go to book or chapter"
+                />
+                <div id="nav_search_list" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal fade"
+      id="my_progress_modal"
+      tabindex="-1"
+      aria-labelledby="my_progress_modal_title"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header align-items-start">
+            <div class="me-auto">
+              <h2 class="modal-title h5 mb-1" id="my_progress_modal_title">
+                My Progress
+              </h2>
+              <p class="text-muted small mb-0">
+                Track where you are across all 10 reading lists and how many
+                times you've read each list and book.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="my_progress_body"></div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="resources_modal"
+      tabindex="-1"
+      aria-labelledby="resources_modal_title"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="resources_modal_title">Resources</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">
+              Tap a book to open its study resource. Some are currently
+              unavailable, but more are coming soon.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <span
+                class="badge rounded-pill text-bg-secondary opacity-75"
+                aria-label="Genesis (coming soon)"
+                >Genesis</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Exodus</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Leviticus</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Numbers</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Deuteronomy</span
+              >
+              <a
+                href="https://github.com/abaransy-business/grant-horner-bible-reading-system/tree/main/resources/joshua"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="badge rounded-pill text-bg-primary text-decoration-none"
+                >Joshua
+                <span class="visually-hidden">(opens in new tab)</span></a
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Judges</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Ruth</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Samuel</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Samuel</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Kings</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Kings</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Chronicles</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Chronicles</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Ezra</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Nehemiah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Esther</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Job</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Psalms</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Proverbs</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Ecclesiastes</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Song of Solomon</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Isaiah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Jeremiah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Lamentations</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Ezekiel</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Daniel</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Hosea</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Joel</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Amos</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Obadiah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Jonah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Micah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Nahum</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Habakkuk</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Zephaniah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Haggai</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Zechariah</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Malachi</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Matthew</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Mark</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Luke</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >John</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Acts</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Romans</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Corinthians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Corinthians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Galatians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Ephesians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Philippians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Colossians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Thessalonians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Thessalonians</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Timothy</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Timothy</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Titus</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Philemon</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Hebrews</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >James</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 Peter</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 Peter</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >1 John</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >2 John</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >3 John</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Jude</span
+              >
+              <span class="badge rounded-pill text-bg-secondary opacity-75"
+                >Revelation</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="highlight_popup"
+      role="toolbar"
+      aria-label="Highlight colors"
+    ></div>
+
+    <div
+      class="modal fade"
+      id="ollama_setup_modal"
+      tabindex="-1"
+      aria-labelledby="ollama_setup_title"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="ollama_setup_title">
+              <i class="bi bi-stars me-1" aria-hidden="true"></i>Set up the
+              local AI assistant
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-0">
+            <section class="ollama-setup-section">
+              <h6 class="ollama-setup-heading">
+                <span class="ollama-setup-step">1</span>
+                Already installed?
+              </h6>
+              <p id="ollama_setup_body" class="mb-2"></p>
+              <div
+                id="ollama_setup_waiting"
+                class="d-none align-items-center gap-2 small text-secondary"
+              >
+                <div
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></div>
+                <span>Waiting for the assistant to come online…</span>
+              </div>
+            </section>
+
+            <div class="ollama-setup-divider" aria-hidden="true">
+              <span>or</span>
+            </div>
+
+            <section
+              id="ollama_setup_install_section"
+              class="ollama-setup-section"
+            >
+              <h6 class="ollama-setup-heading">
+                <span class="ollama-setup-step">2</span>
+                New here? Install Ollama
+              </h6>
+              <p class="mb-3">
+                Ollama is an open-source tool that allows you to run and manage
+                large language models (LLMs) directly on your own computer.
+              </p>
+              <a
+                id="ollama_setup_download_link"
+                class="btn btn-primary"
+                href="https://ollama.com/download"
+                download
+              >
+                <i class="bi bi-download me-1" aria-hidden="true"></i>Download
+              </a>
+              <p
+                id="ollama_setup_install_hint"
+                class="small text-secondary mt-3 mb-0"
+              ></p>
+            </section>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Not now
+            </button>
+            <button
+              id="ollama_setup_retry"
+              type="button"
+              class="btn btn-secondary"
+            >
+              <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Check
+              again
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="offcanvas offcanvas-end"
+      tabindex="-1"
+      id="explain_chat_panel"
+      aria-labelledby="explain_chat_label"
+      data-bs-scroll="true"
+      data-bs-backdrop="false"
+    >
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="explain_chat_label">
+          <i class="bi bi-stars me-1" aria-hidden="true"></i>AI Assistant
+        </h5>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <button
+            id="explain_chat_expand"
+            type="button"
+            class="btn btn-sm btn-link p-1 text-secondary"
+            aria-label="Expand chat panel"
+            aria-pressed="false"
+          >
+            <i
+              id="explain_chat_expand_icon"
+              class="bi bi-arrows-angle-expand"
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+      <div
+        id="explain_chat_status"
+        class="px-3 py-2 small border-bottom"
+        aria-live="polite"
+      ></div>
+      <div class="offcanvas-body d-flex flex-column p-0">
+        <div
+          id="explain_chat_messages"
+          class="flex-grow-1 overflow-auto px-3 py-3"
+          aria-live="polite"
+        >
+          <div id="explain_chat_welcome" class="explain-welcome">
+            <div class="explain-welcome-icon" aria-hidden="true">
+              <i class="bi bi-stars"></i>
+            </div>
+            <h6 class="explain-welcome-title">Ask me anything</h6>
+            <p class="explain-welcome-subtitle">
+              I can explain passages, give historical context, or summarize
+              chapters.
+            </p>
+          </div>
+        </div>
+        <form
+          id="explain_chat_form"
+          class="border-top d-flex gap-2 align-items-stretch"
+        >
+          <textarea
+            id="explain_chat_input"
+            class="form-control"
+            rows="2"
+            placeholder="Ask a question..."
+            aria-label="Chat message"
+          ></textarea>
+          <button
+            id="explain_chat_send"
+            type="submit"
+            class="btn btn-primary"
+            aria-label="Send"
+          >
+            <i class="bi bi-send-fill" aria-hidden="true"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div
+      class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
+      style="z-index: 1100"
+    >
+      <div
+        id="error_toast"
+        class="toast align-items-center text-bg-danger border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-bs-autohide="false"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="error_toast_body"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
