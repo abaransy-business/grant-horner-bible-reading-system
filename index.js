@@ -640,7 +640,7 @@ const initializeApp = async () => {
   // ship installers for. `desktopOS` decides which set is applied.
   const SETUP_COPY = {
     mac: {
-      downloadHref: "/downloads/ollama-mac-installer.dmg",
+      downloadHref: "https://ollama.com/download",
       installHint:
         "Make sure to use a local AI model, like Google's Gemma4. Local models are run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
@@ -650,7 +650,7 @@ const initializeApp = async () => {
         "This window will continue automatically as soon as it's ready.",
     },
     windows: {
-      downloadHref: "/downloads/ollama-windows-installer.zip",
+      downloadHref: "https://ollama.com/download",
       installHint:
         "Make sure to use a local AI model, like Google's Gemma4. Local models are run entirely on your computer. They are not hosted on our servers and will never send us any data.",
       offlineBody:
